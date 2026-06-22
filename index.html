@@ -324,7 +324,11 @@
                   return await response.json();
                 });
                 const moviesData = await Promise.all(moviePromises);
-                const validMovies = moviesData.filter(m => m.Response === 'True');
+                
+                // Map the OMDB fallback to explicitly include the ratings!
+                const validMovies = moviesData.filter(m => m.Response === 'True').map(m => ({
+                    Title: m.Title, Year: m.Year, Poster: m.Poster, imdbID: m.imdbID, Type: m.Type, imdbRating: m.imdbRating
+                }));
                 return { title: cat.title, movies: validMovies };
               });
               
@@ -350,7 +354,20 @@
             const data = await response.json();
 
             if (data.Response === 'True') {
-              setMovies(prev => isNew ? data.Search : [...prev, ...data.Search]);
+              // Fetch detailed IMDB ratings for each search result
+              const detailedMoviesPromises = data.Search.map(async (movie) => {
+                  try {
+                      const detailRes = await fetch(`https://www.omdbapi.com/?apikey=${OMDB_API_KEY}&i=${movie.imdbID}`);
+                      const detailData = await detailRes.json();
+                      return { ...movie, imdbRating: detailData.imdbRating && detailData.imdbRating !== 'N/A' ? detailData.imdbRating : null };
+                  } catch(e) {
+                      return movie;
+                  }
+              });
+              
+              const detailedMovies = await Promise.all(detailedMoviesPromises);
+
+              setMovies(prev => isNew ? detailedMovies : [...prev, ...detailedMovies]);
               const total = parseInt(data.totalResults, 10);
               setHasMore((pageNum * 10) < total); 
             } else {
@@ -373,15 +390,39 @@
               let moreAvailable = true;
 
               if (type === 'movie') {
-                 const res = await fetch(`https://yts.mx/api/v2/list_movies.json?genre=${genre.toLowerCase()}&limit=20&page=${pageNum}`);
-                 const data = await res.json();
-                 if (data.data?.movies) {
-                    newItems = data.data.movies.map(m => ({
-                       Title: m.title, Year: m.year, Poster: m.large_cover_image || m.medium_cover_image || 'N/A', imdbID: m.imdb_code, Type: 'movie', imdbRating: m.rating ? m.rating.toFixed(1) : 'N/A'
-                    }));
-                    moreAvailable = data.data.movies.length === 20;
-                 } else {
-                    moreAvailable = false;
+                 try {
+                     const res = await fetch(`https://yts.mx/api/v2/list_movies.json?genre=${genre.toLowerCase()}&limit=20&page=${pageNum}`);
+                     if (!res.ok) throw new Error("YTS API Blocked");
+                     const data = await res.json();
+                     if (data.data?.movies) {
+                        newItems = data.data.movies.map(m => ({
+                           Title: m.title, Year: m.year, Poster: m.large_cover_image || m.medium_cover_image || 'N/A', imdbID: m.imdb_code, Type: 'movie', imdbRating: m.rating ? m.rating.toFixed(1) : 'N/A'
+                        }));
+                        moreAvailable = data.data.movies.length === 20;
+                     } else {
+                        moreAvailable = false;
+                     }
+                 } catch (ytsErr) {
+                     console.warn('YTS is blocked, using OMDb Genre Keyword Fallback');
+                     // OMDb Fallback for Genres (using genre word as search query)
+                     const res = await fetch(`https://www.omdbapi.com/?apikey=${OMDB_API_KEY}&s=${encodeURIComponent(genre)}&type=movie&page=${pageNum}`);
+                     const data = await res.json();
+                     if (data.Response === 'True') {
+                         const detailedMoviesPromises = data.Search.map(async (movie) => {
+                             try {
+                                 const detailRes = await fetch(`https://www.omdbapi.com/?apikey=${OMDB_API_KEY}&i=${movie.imdbID}`);
+                                 const detailData = await detailRes.json();
+                                 return { ...movie, imdbRating: detailData.imdbRating && detailData.imdbRating !== 'N/A' ? detailData.imdbRating : null };
+                             } catch(e) {
+                                 return movie;
+                             }
+                         });
+                         newItems = await Promise.all(detailedMoviesPromises);
+                         const total = parseInt(data.totalResults, 10);
+                         moreAvailable = (pageNum * 10) < total;
+                     } else {
+                         moreAvailable = false;
+                     }
                  }
               } else {
                  // TVMaze pages start at 0
