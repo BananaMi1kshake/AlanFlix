@@ -175,6 +175,7 @@
       const Film = ({ className }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>);
       const AlertCircle = ({ className }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>);
       const ChevronDown = ({ className }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>);
+      const Star = ({ className, fill }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill={fill || "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>);
 
       const OMDB_API_KEY = 'dd555970';
 
@@ -285,12 +286,12 @@
             ]);
 
             const mapYTS = (movies) => movies ? movies.map(m => ({
-              Title: m.title, Year: m.year, Poster: m.large_cover_image || 'N/A', imdbID: m.imdb_code, Type: 'movie'
+              Title: m.title, Year: m.year, Poster: m.large_cover_image || 'N/A', imdbID: m.imdb_code, Type: 'movie', imdbRating: m.rating ? m.rating.toFixed(1) : 'N/A'
             })) : [];
 
             const mapTV = (shows) => shows.map(show => ({
               Title: show.name, Year: show.premiered ? show.premiered.substring(0, 4) : 'N/A', 
-              Poster: show.image ? show.image.medium : 'N/A', imdbID: show.externals?.imdb, Type: 'series'
+              Poster: show.image ? show.image.medium : 'N/A', imdbID: show.externals?.imdb, Type: 'series', imdbRating: show.rating?.average ? show.rating.average.toFixed(1) : 'N/A'
             })).filter(s => s.imdbID).slice(0, 25);
 
             const allTV = tvMaze.sort((a, b) => b.weight - a.weight);
@@ -376,7 +377,7 @@
                  const data = await res.json();
                  if (data.data?.movies) {
                     newItems = data.data.movies.map(m => ({
-                       Title: m.title, Year: m.year, Poster: m.large_cover_image || m.medium_cover_image || 'N/A', imdbID: m.imdb_code, Type: 'movie'
+                       Title: m.title, Year: m.year, Poster: m.large_cover_image || m.medium_cover_image || 'N/A', imdbID: m.imdb_code, Type: 'movie', imdbRating: m.rating ? m.rating.toFixed(1) : 'N/A'
                     }));
                     moreAvailable = data.data.movies.length === 20;
                  } else {
@@ -391,7 +392,7 @@
                     const data = await res.json();
                     const genreShows = data.filter(s => s.genres.includes(genre) && s.externals?.imdb);
                     newItems = genreShows.map(show => ({
-                       Title: show.name, Year: show.premiered ? show.premiered.substring(0, 4) : 'N/A', Poster: show.image?.medium || 'N/A', imdbID: show.externals.imdb, Type: 'series'
+                       Title: show.name, Year: show.premiered ? show.premiered.substring(0, 4) : 'N/A', Poster: show.image?.medium || 'N/A', imdbID: show.externals.imdb, Type: 'series', imdbRating: show.rating?.average ? show.rating.average.toFixed(1) : 'N/A'
                     }));
                     moreAvailable = true; 
                  }
@@ -585,9 +586,14 @@
                           <span className="w-2 h-10 bg-red-600 rounded-full"></span>
                           {selectedMovie.Title} 
                         </div>
-                        <span className="text-zinc-500 font-normal text-xl sm:text-3xl">
+                        <span className="text-zinc-500 font-normal text-xl sm:text-3xl flex items-center flex-wrap gap-2 sm:gap-3">
                           ({selectedMovie.Year}) 
-                          {selectedEpisodeData && <span className="ml-3 text-red-500 font-bold bg-red-950/50 px-3 py-1 rounded-full text-lg">S{selectedEpisodeData.season} E{selectedEpisodeData.number}</span>}
+                          {selectedMovie.imdbRating && selectedMovie.imdbRating !== 'N/A' && (
+                            <span className="flex items-center gap-1.5 text-yellow-500 text-lg font-bold bg-yellow-500/10 px-3 py-0.5 rounded-full border border-yellow-500/20">
+                              <Star className="w-4 h-4" fill="currentColor" /> {selectedMovie.imdbRating}
+                            </span>
+                          )}
+                          {selectedEpisodeData && <span className="text-red-500 font-bold bg-red-950/50 px-3 py-1 rounded-full text-lg">S{selectedEpisodeData.season} E{selectedEpisodeData.number}</span>}
                         </span>
                       </h2>
                       <button onClick={closePlayer} className="flex items-center gap-2 px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full transition-colors whitespace-nowrap font-medium">
@@ -744,6 +750,14 @@
                           onClick={() => playMovie(movie)}
                         >
                           <div className="aspect-[2/3] w-full relative">
+                            {/* IMDB Rating Badge */}
+                            {movie.imdbRating && movie.imdbRating !== 'N/A' && (
+                              <div className="absolute top-2 right-2 bg-black/80 backdrop-blur-md px-2 py-1 rounded-md flex items-center gap-1 z-20 border border-zinc-800 shadow-[0_4px_10px_rgba(0,0,0,0.5)]">
+                                <Star className="w-3 h-3 text-yellow-500" fill="currentColor" />
+                                <span className="text-white text-[11px] font-black">{movie.imdbRating}</span>
+                              </div>
+                            )}
+
                             {movie.Poster !== 'N/A' ? (
                               <img src={movie.Poster} alt={movie.Title} className="w-full h-full object-cover" loading="lazy" />
                             ) : (
@@ -836,6 +850,14 @@
                                      onClick={() => playMovie(movie)}
                                    >
                                      <div className="aspect-[2/3] w-full relative">
+                                       {/* IMDB Rating Badge */}
+                                       {movie.imdbRating && movie.imdbRating !== 'N/A' && (
+                                         <div className="absolute top-2 right-2 bg-black/80 backdrop-blur-md px-2 py-1 rounded-md flex items-center gap-1 z-20 border border-zinc-800 shadow-[0_4px_10px_rgba(0,0,0,0.5)]">
+                                           <Star className="w-3 h-3 text-yellow-500" fill="currentColor" />
+                                           <span className="text-white text-[11px] font-black">{movie.imdbRating}</span>
+                                         </div>
+                                       )}
+
                                        {movie.Poster !== 'N/A' ? (
                                          <img src={movie.Poster} alt={movie.Title} className="w-full h-full object-cover" loading="lazy" />
                                        ) : (
