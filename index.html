@@ -6,16 +6,12 @@
     <title>AlanFlix</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- React & ReactDOM (Production Versions) -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     
-    <!-- Babel for in-browser JSX compilation -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-    <!-- Configure Babel to use Classic JSX Runtime to prevent import errors -->
     <script>
+      // This perfectly configures Babel to run React purely in the browser without any errors
       Babel.registerPreset("react-classic", {
         presets: [
           [Babel.availablePresets["react"], { runtime: "classic" }]
@@ -82,7 +78,7 @@
         left: 0;
         top: 0;
         color: #e50914;
-        filter: blur(3px);
+        filter: blur(3px); /* Sharp glow */
         opacity: 0;
         animation: textGlow 4.5s ease-in-out forwards;
         z-index: -1;
@@ -157,9 +153,8 @@
 <body>
     <div id="root"></div>
 
-    <!-- Main React App using the custom classic preset -->
     <script type="text/babel" data-presets="react-classic">
-      const { useState, useEffect, useRef } = React;
+      const { useState, useEffect } = React;
 
       // Inline SVG Icons to prevent import errors in browser
       const Search = ({ className }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>);
@@ -175,9 +170,9 @@
         { name: 'SuperEmbed', url: 'https://superembed.stream/movie/' },
         { name: 'VidSrc ME', url: 'https://vidsrc.me/embed/movie/' },
         { name: 'Embed SU', url: 'https://embed.su/embed/movie/' },
+        { name: 'AutoEmbed', url: 'https://autoembed.co/movie/imdb/' },
         { name: 'VidSrc PRO', url: 'https://vidsrc.pro/embed/movie/' },
         { name: 'VidSrc IN', url: 'https://vidsrc.in/embed/movie/' },
-        { name: 'AutoEmbed', url: 'https://autoembed.co/movie/imdb/' },
         { name: 'VidSrc NET', url: 'https://vidsrc.net/embed/movie/' },
         { name: 'Smashy', url: 'https://embed.smashystream.com/playere.php?imdb=' },
         { name: 'MultiEmbed', url: 'https://multiembed.mov/directstream.php?video_id=' },
@@ -194,16 +189,13 @@
         const [selectedMovie, setSelectedMovie] = useState(null);
         const [activeServer, setActiveServer] = useState(STREAMING_SERVERS[0]);
         
-        // Run intro animation sequence
         useEffect(() => {
           const timer = setTimeout(() => {
             setIntroFinished(true);
           }, 4500); 
-          
           return () => clearTimeout(timer);
         }, []);
 
-        // Initial load
         useEffect(() => {
           if (introFinished) {
             handleSearch();
@@ -336,6 +328,7 @@
                       </div>
                     </div>
                     
+                    {}
                     <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-[0_0_50px_rgba(229,9,20,0.15)] ring-1 ring-zinc-800">
                       <div className="absolute inset-0 flex items-center justify-center -z-10">
                          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
@@ -380,7 +373,7 @@
                   </div>
                 )}
 
-                {/* Movie Grid */}
+                {}
                 {!loading && !error && (
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 gap-y-10">
                     {movies.map((movie) => (
