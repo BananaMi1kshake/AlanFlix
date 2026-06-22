@@ -1,0 +1,406 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, Play, X, Film, AlertCircle } from 'lucide-react';
+
+const OMDB_API_KEY = 'dd555970';
+
+const STREAMING_SERVERS = [
+  { name: 'VidLink', url: 'https://vidlink.pro/movie/' },
+  { name: 'SuperEmbed', url: 'https://superembed.stream/movie/' },
+  { name: 'VidSrc ME', url: 'https://vidsrc.me/embed/movie/' },
+  { name: 'Embed SU', url: 'https://embed.su/embed/movie/' },
+  { name: 'VidSrc PRO', url: 'https://vidsrc.pro/embed/movie/' },
+  { name: 'VidSrc IN', url: 'https://vidsrc.in/embed/movie/' },
+  { name: 'AutoEmbed', url: 'https://autoembed.co/movie/imdb/' },
+  { name: 'VidSrc NET', url: 'https://vidsrc.net/embed/movie/' },
+  { name: 'Smashy', url: 'https://embed.smashystream.com/playere.php?imdb=' },
+  { name: 'MultiEmbed', url: 'https://multiembed.mov/directstream.php?video_id=' },
+  { name: 'VidSrc RU', url: 'https://vidsrc-embed.ru/embed/movie/' },
+  { name: 'VidSrc CC', url: 'https://vidsrc.cc/v2/embed/movie/' }
+];
+
+// Embedded CSS for the over-the-top startup animation
+const globalStyles = `
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;800&display=swap');
+
+  body {
+    background-color: #09090b;
+    color: white;
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    overflow-x: hidden;
+  }
+
+  /* --- Intro Animation Styles --- */
+  .intro-overlay {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    perspective: 1000px;
+  }
+
+  .intro-light-beam {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 200vw;
+    height: 200vh;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(229,9,20,0.4) 0%, rgba(0,0,0,1) 60%);
+    opacity: 0;
+    animation: beamFlash 4.5s ease-in-out forwards;
+  }
+
+  .intro-text-container {
+    position: relative;
+    transform-style: preserve-3d;
+  }
+
+  .intro-text {
+    font-family: 'Bebas Neue', cursive;
+    font-size: 12rem;
+    color: transparent;
+    -webkit-text-stroke: 4px #e50914; /* Increased stroke for clarity */
+    text-transform: uppercase;
+    letter-spacing: -5px;
+    animation: cinematicText 4.5s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+    position: relative;
+    z-index: 10;
+  }
+
+  .intro-text::before {
+    content: 'ALANFLIX';
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: #e50914;
+    filter: blur(3px); /* Reduced blur significantly for sharpness */
+    opacity: 0;
+    animation: textGlow 4.5s ease-in-out forwards;
+    z-index: -1;
+  }
+
+  .intro-particles {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, #fff 1px, transparent 1px);
+    background-size: 50px 50px;
+    opacity: 0.1;
+    animation: particleZoom 4.5s linear forwards;
+  }
+
+  @keyframes cinematicText {
+    0% { transform: translateZ(-2000px) rotateX(45deg); opacity: 0; letter-spacing: 50px; }
+    30% { transform: translateZ(0) rotateX(0deg); opacity: 1; letter-spacing: 5px; color: transparent; }
+    50% { color: #e50914; text-shadow: 0 0 5px #e50914, 0 0 10px #e50914; transform: translateZ(50px) scale(1.05); } /* Sharper drop shadows */
+    85% { transform: translateZ(100px) scale(1.15); opacity: 1; filter: blur(0px); }
+    100% { transform: translateZ(1000px) scale(3); opacity: 0; filter: blur(2px); } /* Reduced exit blur */
+  }
+
+  @keyframes textGlow {
+    0%, 30% { opacity: 0; }
+    50%, 80% { opacity: 0.9; }
+    100% { opacity: 0; }
+  }
+
+  @keyframes beamFlash {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(2); }
+  }
+
+  @keyframes particleZoom {
+    0% { transform: scale(1) translateZ(-500px); opacity: 0; }
+    50% { opacity: 0.5; }
+    100% { transform: scale(5) translateZ(500px); opacity: 0; }
+  }
+
+  /* --- UI Styles --- */
+  .glass-nav {
+    background: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+    backdrop-filter: blur(4px);
+  }
+
+  .movie-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .movie-card:hover {
+    transform: scale(1.05) translateY(-10px);
+    z-index: 10;
+    box-shadow: 0 20px 40px rgba(229, 9, 20, 0.2);
+  }
+  
+  .poster-overlay {
+    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .movie-card:hover .poster-overlay {
+    opacity: 1;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: #09090b; }
+  ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #e50914; }
+`;
+
+export default function App() {
+  const [introFinished, setIntroFinished] = useState(false);
+  const [query, setQuery] = useState('Avengers');
+  const [movies, setMovies] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedMovie, setSelectedMovie] = useState(null);
+  const [activeServer, setActiveServer] = useState(STREAMING_SERVERS[0]);
+  
+  // Run intro animation sequence
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIntroFinished(true);
+    }, 4500); // 4.5s matches CSS animation length
+    
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Initial load
+  useEffect(() => {
+    if (introFinished) {
+      handleSearch();
+    }
+  }, [introFinished]);
+
+  const handleSearch = async (e) => {
+    if (e) e.preventDefault();
+    if (!query.trim()) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Type is set to movie to filter out games/episodes
+      const response = await fetch(`https://www.omdbapi.com/?apikey=${OMDB_API_KEY}&s=${encodeURIComponent(query)}&type=movie`);
+      const data = await response.json();
+
+      if (data.Response === 'True') {
+        setMovies(data.Search);
+      } else {
+        setMovies([]);
+        setError(data.Error);
+      }
+    } catch (err) {
+      setError('Failed to fetch data from OMDB API. Check your connection.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const playMovie = (movie) => {
+    setSelectedMovie(movie);
+    setActiveServer(STREAMING_SERVERS[0]);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleNextServer = () => {
+    const currentIndex = STREAMING_SERVERS.findIndex(s => s.name === activeServer.name);
+    const nextIndex = (currentIndex + 1) % STREAMING_SERVERS.length;
+    setActiveServer(STREAMING_SERVERS[nextIndex]);
+  };
+
+  const closePlayer = () => {
+    setSelectedMovie(null);
+  };
+
+  return (
+    <>
+      <style>{globalStyles}</style>
+
+      {/* OVER-THE-TOP INTRO ANIMATION */}
+      {!introFinished && (
+        <div className="intro-overlay">
+          <div className="intro-light-beam"></div>
+          <div className="intro-particles"></div>
+          <div className="intro-text-container">
+            <h1 className="intro-text">ALANFLIX</h1>
+          </div>
+        </div>
+      )}
+
+      {/* MAIN APPLICATION (Hidden until intro is done to prevent flash) */}
+      <div className={`min-h-screen bg-zinc-950 transition-opacity duration-1000 ${introFinished ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'}`}>
+        
+        {/* Navigation Bar */}
+        <nav className="fixed top-0 w-full z-50 glass-nav px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => setSelectedMovie(null)}>
+            <Film className="text-red-600 w-8 h-8" />
+            <span className="font-['Bebas_Neue'] text-3xl tracking-wide text-red-600 drop-shadow-[0_0_10px_rgba(229,9,20,0.5)]">
+              ALANFLIX
+            </span>
+          </div>
+
+          <form onSubmit={handleSearch} className="relative w-full md:w-96">
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search for movies..."
+              className="w-full bg-zinc-900/80 border border-zinc-800 text-white rounded-full py-2.5 pl-5 pr-12 focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 transition-all placeholder-zinc-500"
+            />
+            <button 
+              type="submit" 
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-zinc-400 hover:text-red-500 transition-colors"
+            >
+              <Search className="w-5 h-5" />
+            </button>
+          </form>
+        </nav>
+
+        {/* Main Content Area */}
+        <main className="pt-28 pb-12 px-6 lg:px-12 max-w-screen-2xl mx-auto">
+          
+          {/* Active Player Section */}
+          {selectedMovie && (
+            <div className="w-full mb-12 animate-in fade-in slide-in-from-bottom-8 duration-700">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-3xl font-bold text-white flex items-center gap-3">
+                  <span className="w-1.5 h-8 bg-red-600 rounded-full"></span>
+                  {selectedMovie.Title} <span className="text-zinc-500 font-normal">({selectedMovie.Year})</span>
+                </h2>
+                <button 
+                  onClick={closePlayer}
+                  className="flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full transition-colors"
+                >
+                  <X className="w-4 h-4" /> Close Player
+                </button>
+              </div>
+
+              <div className="bg-zinc-900 rounded-lg p-4 mb-4 border border-zinc-800">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-3">
+                  <span className="text-sm font-medium text-zinc-400">Streaming Sources ({STREAMING_SERVERS.length} available):</span>
+                  <button 
+                    onClick={handleNextServer}
+                    className="flex items-center justify-center gap-2 px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-full transition-colors shadow-[0_0_15px_rgba(229,9,20,0.3)]"
+                  >
+                    <Play className="w-4 h-4" fill="currentColor" /> Try Next Server
+                  </button>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  {STREAMING_SERVERS.map((server) => (
+                    <button
+                      key={server.name}
+                      onClick={() => setActiveServer(server)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-300 ${
+                        activeServer.name === server.name 
+                          ? 'bg-white text-black shadow-[0_0_10px_rgba(255,255,255,0.3)] scale-105' 
+                          : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white'
+                      }`}
+                    >
+                      {server.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-[0_0_50px_rgba(229,9,20,0.15)] ring-1 ring-zinc-800">
+                <div className="absolute inset-0 flex items-center justify-center -z-10">
+                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+                </div>
+                <iframe
+                  key={activeServer.url}
+                  className="absolute inset-0 w-full h-full"
+                  src={`${activeServer.url}${selectedMovie.imdbID}`}
+                  allowFullScreen
+                  frameBorder="0"
+                  title="Video Player"
+                  referrerPolicy="origin"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Search Results Title */}
+          {!selectedMovie && !loading && movies.length > 0 && (
+             <h3 className="text-xl font-medium text-zinc-400 mb-6 flex items-center gap-2">
+               Results for <span className="text-white font-bold">"{query}"</span>
+             </h3>
+          )}
+
+          {/* Loading State */}
+          {loading && (
+            <div className="flex flex-col items-center justify-center py-32">
+              <div className="relative w-20 h-20">
+                <div className="absolute inset-0 border-4 border-zinc-800 rounded-full"></div>
+                <div className="absolute inset-0 border-4 border-red-600 rounded-full border-t-transparent animate-spin"></div>
+              </div>
+              <p className="mt-6 text-zinc-400 font-medium tracking-widest uppercase">Fetching DB...</p>
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && !loading && (
+            <div className="flex flex-col items-center justify-center py-24 text-center">
+              <AlertCircle className="w-16 h-16 text-zinc-700 mb-4" />
+              <h3 className="text-2xl font-bold text-white mb-2">No Movies Found</h3>
+              <p className="text-zinc-500">{error}</p>
+            </div>
+          )}
+
+          {/* Movie Grid */}
+          {!loading && !error && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 gap-y-10">
+              {movies.map((movie) => (
+                <div 
+                  key={movie.imdbID} 
+                  className="movie-card relative group cursor-pointer rounded-lg overflow-hidden bg-zinc-900"
+                  onClick={() => playMovie(movie)}
+                >
+                  <div className="aspect-[2/3] w-full relative">
+                    {movie.Poster !== 'N/A' ? (
+                      <img 
+                        src={movie.Poster} 
+                        alt={movie.Title}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-800 text-zinc-500 p-4 text-center">
+                        <Film className="w-12 h-12 mb-2 opacity-50" />
+                        <span className="text-xs font-semibold">NO POSTER</span>
+                      </div>
+                    )}
+                    
+                    {/* Hover Overlay */}
+                    <div className="poster-overlay absolute inset-0 flex flex-col items-center justify-center backdrop-blur-sm">
+                      <div className="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center transform scale-50 group-hover:scale-100 transition-transform duration-300 shadow-[0_0_30px_rgba(229,9,20,0.8)]">
+                        <Play className="w-6 h-6 text-white ml-1 pl-0.5" fill="currentColor" />
+                      </div>
+                      <span className="mt-4 font-bold text-sm tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">
+                        Play Now
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {/* Card Info */}
+                  <div className="p-3">
+                    <h4 className="text-white font-semibold truncate text-sm" title={movie.Title}>
+                      {movie.Title}
+                    </h4>
+                    <p className="text-red-500 text-xs font-bold mt-1">
+                      {movie.Year} <span className="text-zinc-600 font-normal ml-1">· Movie</span>
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+        </main>
+      </div>
+    </>
+  );
+}
