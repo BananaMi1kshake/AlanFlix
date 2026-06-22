@@ -62,14 +62,22 @@
 
       .intro-text {
         font-family: 'Bebas Neue', cursive;
-        font-size: 12rem;
+        /* FIX: Mobile responsive font size using clamp */
+        font-size: clamp(4rem, 15vw, 12rem); 
         color: transparent;
         -webkit-text-stroke: 4px #e50914;
         text-transform: uppercase;
-        letter-spacing: -5px;
+        /* FIX: Removed letter-spacing animation to prevent severe CPU freezing/jank */
         animation: cinematicText 4.5s cubic-bezier(0.19, 1, 0.22, 1) forwards;
         position: relative;
         z-index: 10;
+      }
+
+      /* Reduce stroke width on mobile for legibility */
+      @media (max-width: 768px) {
+        .intro-text {
+          -webkit-text-stroke: 2px #e50914;
+        }
       }
 
       .intro-text::before {
@@ -93,10 +101,11 @@
         animation: particleZoom 4.5s linear forwards;
       }
 
+      /* FIX: Use only hardware-accelerated properties (transform, opacity) */
       @keyframes cinematicText {
-        0% { transform: translateZ(-2000px) rotateX(45deg); opacity: 0; letter-spacing: 50px; }
-        30% { transform: translateZ(0) rotateX(0deg); opacity: 1; letter-spacing: 5px; color: transparent; }
-        50% { color: #e50914; text-shadow: 0 0 5px #e50914, 0 0 10px #e50914; transform: translateZ(50px) scale(1.05); }
+        0% { transform: translateZ(-2000px) rotateX(45deg); opacity: 0; }
+        30% { transform: translateZ(0) rotateX(0deg); opacity: 1; color: transparent; }
+        50% { color: #e50914; text-shadow: 0 0 5px rgba(229,9,20,0.5), 0 0 10px rgba(229,9,20,0.5); transform: translateZ(50px) scale(1.05); }
         85% { transform: translateZ(100px) scale(1.15); opacity: 1; filter: blur(0px); }
         100% { transform: translateZ(1000px) scale(3); opacity: 0; filter: blur(2px); }
       }
@@ -258,10 +267,11 @@
             {/* MAIN APPLICATION */}
             <div className={`min-h-screen bg-zinc-950 transition-opacity duration-1000 ${introFinished ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'}`}>
               
-              <nav className="fixed top-0 w-full z-50 glass-nav px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+              {/* FIX: Adjusted mobile padding and gaps to prevent overflow */}
+              <nav className="fixed top-0 w-full z-50 glass-nav px-4 md:px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-3 md:gap-4">
                 <div className="flex items-center gap-2 cursor-pointer" onClick={() => setSelectedMovie(null)}>
-                  <Film className="text-red-600 w-8 h-8" />
-                  <span className="font-['Bebas_Neue'] text-3xl tracking-wide text-red-600 drop-shadow-[0_0_10px_rgba(229,9,20,0.5)]">
+                  <Film className="text-red-600 w-7 h-7 md:w-8 md:h-8" />
+                  <span className="font-['Bebas_Neue'] text-2xl md:text-3xl tracking-wide text-red-600 drop-shadow-[0_0_10px_rgba(229,9,20,0.5)]">
                     ALANFLIX
                   </span>
                 </div>
@@ -283,7 +293,8 @@
                 </form>
               </nav>
 
-              <main className="pt-28 pb-12 px-6 lg:px-12 max-w-screen-2xl mx-auto">
+              {/* FIX: Increased top-padding (pt-36) for mobile so the search bar doesn't overlap the movies */}
+              <main className="pt-36 md:pt-28 pb-12 px-4 sm:px-6 lg:px-12 max-w-screen-2xl mx-auto">
                 
                 {/* Active Player Section */}
                 {selectedMovie && (
@@ -366,16 +377,16 @@
 
                 {/* Error State */}
                 {error && !loading && (
-                  <div className="flex flex-col items-center justify-center py-24 text-center">
+                  <div className="flex flex-col items-center justify-center py-24 text-center px-4">
                     <AlertCircle className="w-16 h-16 text-zinc-700 mb-4" />
                     <h3 className="text-2xl font-bold text-white mb-2">No Movies Found</h3>
                     <p className="text-zinc-500">{error}</p>
                   </div>
                 )}
 
-                {}
+                {/* Movie Grid - FIX: Improved mobile grid gaps to look less cramped */}
                 {!loading && !error && (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 gap-y-10">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6 gap-y-8 sm:gap-y-10">
                     {movies.map((movie) => (
                       <div 
                         key={movie.imdbID} 
