@@ -202,8 +202,11 @@
       const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
       const TMDB_IMG_BASE = 'https://image.tmdb.org/t/p/w500';
 
-      const EN_GENRES = { 'Action': 28, 'Comedy': 35, 'Sci-Fi': 878, 'Horror': 27, 'Romance': 10749, 'Thriller': 53, 'Drama': 18, 'Animation': 16, 'Crime': 80, 'Mystery': 9648 };
-      const RU_GENRES = { 'Боевик': 28, 'Комедия': 35, 'Фантастика': 878, 'Ужасы': 27, 'Мелодрама': 10749, 'Триллер': 53, 'Драма': 18, 'Мультфильм': 16, 'Криминал': 80, 'Детектив': 9648 };
+      const EN_MOVIE_GENRES = { 'Action': 28, 'Comedy': 35, 'Sci-Fi': 878, 'Horror': 27, 'Romance': 10749, 'Thriller': 53, 'Drama': 18, 'Animation': 16, 'Crime': 80, 'Mystery': 9648 };
+      const RU_MOVIE_GENRES = { 'Боевик': 28, 'Комедия': 35, 'Фантастика': 878, 'Ужасы': 27, 'Мелодрама': 10749, 'Триллер': 53, 'Драма': 18, 'Мультфильм': 16, 'Криминал': 80, 'Детектив': 9648 };
+
+      const EN_TV_GENRES = { 'Action & Adv': 10759, 'Comedy': 35, 'Sci-Fi & Fantasy': 10765, 'Drama': 18, 'Animation': 16, 'Crime': 80, 'Mystery': 9648, 'Kids': 10762, 'Reality': 10764, 'Documentary': 99 };
+      const RU_TV_GENRES = { 'Боевик и Прикл': 10759, 'Комедия': 35, 'Фантастика': 10765, 'Драма': 18, 'Мультфильм': 16, 'Криминал': 80, 'Детектив': 9648, 'Детские': 10762, 'Реалити': 10764, 'Документальный': 99 };
 
       // Helper to map TMDB item to universal app format
       const mapTMDBItem = (item, defaultType = 'movie') => ({
@@ -402,6 +405,7 @@
 
         const loadHomeGridData = async (pageNum, isNew = false) => {
            if (isNew) setHomeGrid([]);
+           setLoading(true);
            try {
               const res = await fetch(`${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&language=${appLang}&sort_by=popularity.desc&page=${pageNum}`);
               const data = await res.json();
@@ -410,7 +414,7 @@
                  setHomeGrid(prev => isNew ? newItems : [...prev, ...newItems]);
                  setHasMore(pageNum < data.total_pages);
               }
-           } catch (err) {}
+           } catch (err) {} finally { setLoading(false); }
         };
 
         const fetchSearch = async (pageNum, typeParam, qParam, isNew = false) => {
@@ -438,8 +442,12 @@
            if (isNew) { setLoading(true); setMovies([]); }
            setError(null);
            try {
-              const genresDict = appLang === 'ru-RU' ? RU_GENRES : EN_GENRES;
-              const genreId = genresDict[genreName];
+              let genreId;
+              if (typeParam === 'series') {
+                  genreId = (appLang === 'ru-RU' ? RU_TV_GENRES : EN_TV_GENRES)[genreName];
+              } else {
+                  genreId = (appLang === 'ru-RU' ? RU_MOVIE_GENRES : EN_MOVIE_GENRES)[genreName];
+              }
               const endpt = typeParam === 'series' ? 'discover/tv' : 'discover/movie';
               
               const res = await fetch(`${TMDB_BASE_URL}/${endpt}?api_key=${TMDB_API_KEY}&language=${appLang}&with_genres=${genreId}&page=${pageNum}&sort_by=popularity.desc`);
@@ -564,7 +572,8 @@
           return `${baseUrl}${selectedMovie.id}`;
         };
 
-        const currentGenres = appLang === 'ru-RU' ? Object.keys(RU_GENRES) : Object.keys(EN_GENRES);
+        const currentMovieGenres = appLang === 'ru-RU' ? Object.keys(RU_MOVIE_GENRES) : Object.keys(EN_MOVIE_GENRES);
+        const currentTVGenres = appLang === 'ru-RU' ? Object.keys(RU_TV_GENRES) : Object.keys(EN_TV_GENRES);
 
         return (
           <React.Fragment>
@@ -625,13 +634,13 @@
                   <div className={`absolute top-full left-0 md:left-auto right-0 md:right-[350px] mt-2 w-full md:w-[400px] bg-zinc-900 border border-zinc-800 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.9)] transition-all duration-200 flex overflow-hidden backdrop-blur-xl ${isBrowseOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'}`}>
                      <div className="w-1/2 border-r border-zinc-800 p-2 bg-black/20">
                         <div className="text-[10px] font-black text-red-600 mb-2 px-3 pt-2 uppercase tracking-widest">{appLang === 'ru-RU' ? 'Фильмы' : 'Movies'}</div>
-                        {currentGenres.map(g => (
+                        {currentMovieGenres.map(g => (
                            <button key={g} onClick={() => selectGenre('movie', g)} className="block w-full text-left px-3 py-2 text-sm font-medium text-zinc-300 hover:bg-red-600 hover:text-white rounded-lg transition-colors">{g}</button>
                         ))}
                      </div>
                      <div className="w-1/2 p-2 bg-black/20">
                         <div className="text-[10px] font-black text-red-600 mb-2 px-3 pt-2 uppercase tracking-widest">{appLang === 'ru-RU' ? 'Сериалы' : 'TV Shows'}</div>
-                        {currentGenres.map(g => (
+                        {currentTVGenres.map(g => (
                            <button key={g} onClick={() => selectGenre('series', g)} className="block w-full text-left px-3 py-2 text-sm font-medium text-zinc-300 hover:bg-red-600 hover:text-white rounded-lg transition-colors">{g}</button>
                         ))}
                      </div>
