@@ -442,7 +442,8 @@
 
             if (data.results && data.results.length > 0) {
               let newItems = data.results.map(m => mapTMDBItem(m, typeParam === 'anime' ? 'series' : typeParam));
-              newItems = newItems.filter(m => typeParam === 'anime' ? m.isAnime : !m.isAnime);
+              if (typeParam === 'anime') newItems = newItems.filter(m => m.isAnime);
+              else newItems = newItems.filter(m => !m.isAnime);
               
               setMovies(prev => isNew ? newItems : [...prev, ...newItems]);
               setHasMore(pageNum < data.total_pages); 
@@ -462,7 +463,6 @@
               let url;
               if (typeParam === 'anime') {
                  let genreId = '';
-                 // Append specific anime genre ID if the user didn't click the "All Anime" button
                  if (genreName !== 'All Anime' && genreName !== 'Все Аниме' && genreName !== 'Anime' && genreName !== 'Аниме') {
                     const animeGenresDict = appLang === 'ru-RU' ? RU_ANIME_GENRES : EN_ANIME_GENRES;
                     genreId = animeGenresDict[genreName] ? `,${animeGenresDict[genreName]}` : '';
@@ -480,33 +480,38 @@
               const res = await fetch(url);
               const data = await res.json();
               
+              let newItems = [];
               if (data.results && data.results.length > 0) {
-                 let newItems = data.results.map(m => mapTMDBItem(m, typeParam === 'anime' ? 'series' : typeParam));
-                 newItems = newItems.filter(m => typeParam === 'anime' ? m.isAnime : !m.isAnime);
+                 newItems = data.results.map(m => mapTMDBItem(m, typeParam === 'anime' ? 'series' : typeParam));
+                 if (typeParam === 'anime') newItems = newItems.filter(m => m.isAnime);
+                 else newItems = newItems.filter(m => !m.isAnime);
+              }
 
-                 // --- CORY IN THE HOUSE ANIME MEME OVERRIDE ---
-                 if (pageNum === 1 && typeParam === 'anime' && (genreName === 'Action' || genreName === 'Экшен')) {
-                    newItems.unshift({
-                       id: 119, // Authentic TMDB ID for Cory in the House
-                       Title: 'Cory in the House',
-                       Year: '2007',
-                       Poster: 'https://m.media-amazon.com/images/M/MV5BMTM0ODU1MjEzNF5BMl5BanBnXkFtZTcwNTI1MzYxMQ@@._V1_FMjpg_UX500_.jpg', // Official IMDb Poster
-                       Type: 'series',
-                       imdbRating: '10.0', // Certified Masterpiece
-                       Overview: '',
-                       isAnime: true
-                    });
+              // --- CORY IN THE HOUSE ANIME MEME OVERRIDE ---
+              if (pageNum === 1 && typeParam === 'anime' && (genreName === 'Action' || genreName === 'Экшен' || genreName === 'All Anime' || genreName === 'Все Аниме')) {
+                 if (!newItems.some(m => m.id === 119)) {
+                     newItems.unshift({
+                        id: 119, // Authentic TMDB ID
+                        Title: 'Cory in the House',
+                        Year: '2007',
+                        Poster: 'https://m.media-amazon.com/images/M/MV5BMTM0ODU1MjEzNF5BMl5BanBnXkFtZTcwNTI1MzYxMQ@@._V1_FMjpg_UX500_.jpg',
+                        Type: 'series',
+                        imdbRating: '10.0', // Certified Masterpiece
+                        Overview: 'Cory Baxter moves to the White House, instantly initiating the greatest anime arc in history.',
+                        isAnime: true
+                     });
                  }
-                 // ---------------------------------------------
+              }
 
+              if (newItems.length > 0) {
                  setMovies(prev => isNew ? newItems : [...prev, ...newItems]);
-                 setHasMore(pageNum < data.total_pages);
+                 setHasMore(pageNum < (data.total_pages || 1));
               } else {
                  if (isNew) setError(appLang === 'ru-RU' ? 'Ничего не найдено.' : 'No titles found for this genre.');
                  setHasMore(false);
               }
            } catch (err) {
-              if (isNew) setError(`Failed to fetch titles.`);
+              if (isNew) setError(appLang === 'ru-RU' ? 'Ошибка загрузки.' : 'Failed to fetch titles.');
            } finally { setLoading(false); }
         };
 
