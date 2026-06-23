@@ -179,14 +179,11 @@
       const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
       const TMDB_IMG_BASE = 'https://image.tmdb.org/t/p/w500';
 
-      const MOVIE_GENRES = ['Action', 'Comedy', 'Sci-Fi', 'Horror', 'Romance', 'Thriller', 'Drama', 'Animation'];
-      const TV_GENRES = ['Action', 'Comedy', 'Sci-Fi & Fantasy', 'Mystery', 'Romance', 'Crime', 'Drama', 'Animation'];
-      
-      const RU_MOVIE_GENRES = ['Боевик', 'Комедия', 'Фантастика', 'Ужасы', 'Мелодрама', 'Триллер', 'Драма', 'Мультфильм'];
-      const RU_TV_GENRES = ['Боевик', 'Комедия', 'Фантастика', 'Детектив', 'Мелодрама', 'Криминал', 'Драма', 'Мультфильм'];
+      const COMMON_GENRES = ['Action', 'Comedy', 'Sci-Fi', 'Horror', 'Romance', 'Thriller', 'Drama', 'Animation', 'Crime', 'Mystery'];
+      const RU_COMMON_GENRES = ['Боевик', 'Комедия', 'Фантастика', 'Ужасы', 'Мелодрама', 'Триллер', 'Драма', 'Мультфильм', 'Криминал', 'Детектив'];
 
-      const TMDB_MOVIE_GENRE_IDS = { 'Action': 28, 'Comedy': 35, 'Sci-Fi': 878, 'Horror': 27, 'Romance': 10749, 'Thriller': 53, 'Drama': 18, 'Animation': 16, 'Боевик': 28, 'Комедия': 35, 'Фантастика': 878, 'Ужасы': 27, 'Мелодрама': 10749, 'Триллер': 53, 'Драма': 18, 'Мультфильм': 16 };
-      const TMDB_TV_GENRE_IDS = { 'Action': 10759, 'Comedy': 35, 'Sci-Fi & Fantasy': 10765, 'Mystery': 9648, 'Romance': 10749, 'Crime': 80, 'Drama': 18, 'Animation': 16, 'Боевик': 10759, 'Комедия': 35, 'Фантастика': 10765, 'Детектив': 9648, 'Мелодрама': 10749, 'Криминал': 80, 'Драма': 18, 'Мультфильм': 16 };
+      const TMDB_MOVIE_GENRE_IDS = { 'Action': 28, 'Comedy': 35, 'Sci-Fi': 878, 'Horror': 27, 'Romance': 10749, 'Thriller': 53, 'Drama': 18, 'Animation': 16, 'Crime': 80, 'Mystery': 9648, 'Боевик': 28, 'Комедия': 35, 'Фантастика': 878, 'Ужасы': 27, 'Мелодрама': 10749, 'Триллер': 53, 'Драма': 18, 'Мультфильм': 16, 'Криминал': 80, 'Детектив': 9648 };
+      const TMDB_TV_GENRE_IDS = { 'Action': 10759, 'Comedy': 35, 'Sci-Fi': 10765, 'Horror': 9648, 'Romance': 10749, 'Thriller': 9648, 'Drama': 18, 'Animation': 16, 'Crime': 80, 'Mystery': 9648, 'Боевик': 10759, 'Комедия': 35, 'Фантастика': 10765, 'Ужасы': 9648, 'Мелодрама': 10749, 'Триллер': 9648, 'Драма': 18, 'Мультфильм': 16, 'Криминал': 80, 'Детектив': 9648 };
 
       // Custom Hook for Infinite Scrolling
       function useInfiniteScroll(callback, hasMore, loading) {
@@ -206,10 +203,10 @@
 
       function App() {
         // Global App States
-        const [appLang, setAppLang] = useState('en-US'); // Controls TMDB language
+        const [appLang, setAppLang] = useState('en-US'); // Controls TMDB language and Server Pools
         const [introFinished, setIntroFinished] = useState(false);
         const [isHome, setIsHome] = useState(true);
-        const [browseContext, setBrowseContext] = useState('search'); // 'search' or 'genre'
+        const [browseContext, setBrowseContext] = useState('home'); // 'home', 'search' or 'genre'
         const [activeGenre, setActiveGenre] = useState(null); // { type, genre }
         
         // Data States
@@ -243,13 +240,41 @@
           window.history.pushState({}, '', url);
         };
 
+        const loadHomeGridData = async (pageNum, isNew = false) => {
+           if (isNew) { setLoading(true); setMovies([]); }
+           setError(null);
+           try {
+              const res = await fetch(`${TMDB_BASE_URL}/trending/all/week?api_key=${TMDB_API_KEY}&page=${pageNum}&language=${appLang}`);
+              const data = await res.json();
+              
+              if (data.results) {
+                 const newItems = data.results.map(m => ({
+                    id: m.id, Title: m.title || m.name, Year: (m.release_date || m.first_air_date || 'N/A').substring(0, 4),
+                    Poster: m.poster_path ? `${TMDB_IMG_BASE}${m.poster_path}` : 'N/A', Type: m.media_type === 'tv' ? 'series' : 'movie', imdbRating: m.vote_average ? m.vote_average.toFixed(1) : 'N/A'
+                 }));
+                 setMovies(prev => isNew ? newItems : [...prev, ...newItems]);
+                 setHasMore(pageNum < data.total_pages && pageNum < 500); 
+              } else {
+                 setHasMore(false);
+              }
+           } catch (err) {
+              if (isNew) setError(`Failed to fetch recommendations.`);
+           } finally {
+              setLoading(false);
+           }
+        };
+
         const goHome = (skipUrlUpdate = false) => {
            setIsHome(true);
            setSelectedMovie(null);
            setQuery('');
            setDebouncedQuery('');
            setActiveGenre(null);
+           setBrowseContext('home');
+           setPage(1);
            if (!skipUrlUpdate) updateURL({});
+           fetchHomeData();
+           loadHomeGridData(1, true);
         };
 
         // Listen for browser Back/Forward navigation (PopState)
@@ -332,17 +357,17 @@
         }, []);
 
         // Listen for Language Changes
+        // Listen for Language Changes and auto-refresh current view
         useEffect(() => {
           if (!introFinished) return;
           if (isHome && !new URLSearchParams(window.location.search).has('v')) {
              fetchHomeData();
+             if (browseContext === 'home') loadHomeGridData(1, true);
           } else if (browseContext === 'search' && debouncedQuery.trim()) {
              setPage(1);
              fetchSearch(1, true, searchType, debouncedQuery);
           } else if (browseContext === 'genre' && activeGenre) {
-             const translatedGenre = activeGenre.type === 'movie' 
-               ? (appLang === 'ru-RU' ? RU_MOVIE_GENRES[MOVIE_GENRES.indexOf(activeGenre.genre)] || activeGenre.genre : MOVIE_GENRES[RU_MOVIE_GENRES.indexOf(activeGenre.genre)] || activeGenre.genre)
-               : (appLang === 'ru-RU' ? RU_TV_GENRES[TV_GENRES.indexOf(activeGenre.genre)] || activeGenre.genre : TV_GENRES[RU_TV_GENRES.indexOf(activeGenre.genre)] || activeGenre.genre);
+             const translatedGenre = appLang === 'ru-RU' ? RU_COMMON_GENRES[COMMON_GENRES.indexOf(activeGenre.genre)] || activeGenre.genre : COMMON_GENRES[RU_COMMON_GENRES.indexOf(activeGenre.genre)] || activeGenre.genre;
              setActiveGenre({ type: activeGenre.type, genre: translatedGenre });
              loadGenreData(1, activeGenre.type, translatedGenre, true);
           }
@@ -464,6 +489,8 @@
               fetchSearch(nextPage, false, searchType, debouncedQuery);
            } else if (browseContext === 'genre') {
               loadGenreData(nextPage, activeGenre.type, activeGenre.genre, false);
+           } else if (browseContext === 'home') {
+              loadHomeGridData(nextPage, false);
            }
         }, [page, loading, hasMore, browseContext, activeGenre, debouncedQuery, searchType, appLang]);
 
@@ -544,13 +571,12 @@
           const baseUrl = selectedMovie.Type === 'series' ? 'https://www.vidking.net/embed/tv/' : 'https://www.vidking.net/embed/movie/';
           
           if (selectedMovie.Type === 'series' && selectedEpisodeData) {
-            return `${baseUrl}${selectedMovie.id}/${selectedEpisodeData.season_number}/${selectedEpisodeData.episode_number}`;
+            return `${baseUrl}${selectedMovie.id}/${selectedEpisodeData.season}/${selectedEpisodeData.number}`;
           }
           return `${baseUrl}${selectedMovie.id}`;
         };
 
-        const currentMoviesGenres = appLang === 'ru-RU' ? RU_MOVIE_GENRES : MOVIE_GENRES;
-        const currentTVGenres = appLang === 'ru-RU' ? RU_TV_GENRES : TV_GENRES;
+        const currentGenres = appLang === 'ru-RU' ? RU_COMMON_GENRES : COMMON_GENRES;
 
         return (
           <React.Fragment>
@@ -594,16 +620,16 @@
                      <div className="absolute left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:right-0 mt-2 w-[90vw] max-w-sm sm:w-80 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.8)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 flex overflow-hidden backdrop-blur-xl">
                         <div className="w-1/2 border-r border-zinc-800 p-2 bg-black/20">
                            <div className="text-[10px] font-black text-red-600 mb-2 px-3 pt-2 uppercase tracking-widest">{appLang === 'ru-RU' ? 'Фильмы' : 'Movies'}</div>
-                           {currentMoviesGenres.map(g => (
-                              <button key={g} onClick={() => selectGenre('movie', g)} className="block w-full text-left px-3 py-2 text-sm font-medium text-zinc-300 hover:bg-red-600 hover:text-white rounded-lg transition-colors">
+                           {currentGenres.map(g => (
+                              <button key={`movie-${g}`} onClick={() => selectGenre('movie', g)} className="block w-full text-left px-3 py-2 text-sm font-medium text-zinc-300 hover:bg-red-600 hover:text-white rounded-lg transition-colors">
                                  {g}
                               </button>
                            ))}
                         </div>
                         <div className="w-1/2 p-2 bg-black/20">
                            <div className="text-[10px] font-black text-red-600 mb-2 px-3 pt-2 uppercase tracking-widest">{appLang === 'ru-RU' ? 'Сериалы' : 'TV Shows'}</div>
-                           {currentTVGenres.map(g => (
-                              <button key={g} onClick={() => selectGenre('series', g)} className="block w-full text-left px-3 py-2 text-sm font-medium text-zinc-300 hover:bg-red-600 hover:text-white rounded-lg transition-colors">
+                           {currentGenres.map(g => (
+                              <button key={`tv-${g}`} onClick={() => selectGenre('series', g)} className="block w-full text-left px-3 py-2 text-sm font-medium text-zinc-300 hover:bg-red-600 hover:text-white rounded-lg transition-colors">
                                  {g}
                               </button>
                            ))}
@@ -770,99 +796,9 @@
                   </div>
                 )}
 
-                {}
-                {!isHome && (
-                  <div className="max-w-7xl mx-auto">
-                    {!selectedMovie && !loading && movies.length > 0 && (
-                      <h3 className="text-2xl font-medium text-zinc-400 mb-8 flex items-center gap-2">
-                        {browseContext === 'search' ? (
-                          <>{appLang === 'ru-RU' ? 'Результаты для' : 'Results for'} <span className="text-white font-bold">"{query}"</span></>
-                        ) : (
-                          <>{appLang === 'ru-RU' ? 'Категория:' : 'Browsing'} <span className="text-white font-bold">{activeGenre.genre} {activeGenre.type === 'movie' ? (appLang === 'ru-RU' ? '(Фильмы)' : 'Movies') : (appLang === 'ru-RU' ? '(Сериалы)' : 'TV Shows')}</span></>
-                        )}
-                      </h3>
-                    )}
-
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6 gap-y-8 sm:gap-y-10">
-                      {movies.map((movie, index) => (
-                        <div 
-                          key={`${movie.id}-${index}`} 
-                          className="movie-card relative group cursor-pointer rounded-xl overflow-hidden bg-zinc-900 shadow-lg"
-                          onClick={() => playMovie(movie)}
-                        >
-                          <div className="aspect-[2/3] w-full relative">
-                            {movie.Poster !== 'N/A' ? (
-                              <img src={movie.Poster} alt={movie.Title} className="w-full h-full object-cover" loading="lazy" />
-                            ) : (
-                              <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-950 text-zinc-700 p-4 text-center">
-                                <Film className="w-12 h-12 mb-2 opacity-30" />
-                                <span className="text-xs font-bold tracking-widest">{appLang === 'ru-RU' ? 'НЕТ ПОСТЕРА' : 'NO POSTER'}</span>
-                              </div>
-                            )}
-                            
-                            {movie.imdbRating !== 'N/A' && movie.imdbRating !== '0.0' && (
-                               <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded-md flex items-center gap-1 border border-zinc-700/50 shadow-lg">
-                                  <Star className="w-3.5 h-3.5 text-yellow-500" />
-                                  <span className="text-white text-xs font-bold">{movie.imdbRating}</span>
-                               </div>
-                            )}
-
-                            <div className="poster-overlay absolute inset-0 flex flex-col items-center justify-center backdrop-blur-[2px]">
-                              <div className="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center transform scale-50 group-hover:scale-100 transition-transform duration-300 shadow-[0_0_30px_rgba(229,9,20,0.8)]">
-                                <Play className="w-6 h-6 text-white ml-1 pl-0.5" fill="currentColor" />
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <div className="p-4 bg-zinc-900">
-                            <h4 className="text-white font-bold truncate text-sm mb-1" title={movie.Title}>{movie.Title}</h4>
-                            <div className="flex items-center justify-between">
-                               <p className="text-zinc-400 text-xs font-medium">{movie.Year}</p>
-                               <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-sm ${movie.Type === 'series' ? 'bg-blue-900/50 text-blue-400' : 'bg-red-900/50 text-red-400'}`}>
-                                  {movie.Type === 'series' ? 'TV' : 'Movie'}
-                               </span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {!selectedMovie && hasMore && (
-                       <div ref={lastElementRef} className="py-16 flex flex-col items-center justify-center">
-                          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-red-600 mb-4"></div>
-                          <span className="text-zinc-500 font-bold tracking-widest uppercase text-xs">{appLang === 'ru-RU' ? 'Загрузка...' : 'Loading More...'}</span>
-                       </div>
-                    )}
-                    
-                    {!selectedMovie && !hasMore && movies.length > 0 && !loading && (
-                       <div className="py-16 text-center text-zinc-600 font-bold uppercase tracking-widest text-sm">
-                          {appLang === 'ru-RU' ? 'Конец Списка' : 'End of Results'}
-                       </div>
-                    )}
-                  </div>
-                )}
-
-                {}
-                {loading && movies.length === 0 && !isHome && (
-                  <div className="flex flex-col items-center justify-center py-32">
-                    <div className="relative w-20 h-20">
-                      <div className="absolute inset-0 border-4 border-zinc-800 rounded-full"></div>
-                      <div className="absolute inset-0 border-4 border-red-600 rounded-full border-t-transparent animate-spin"></div>
-                    </div>
-                  </div>
-                )}
-
-                {error && !loading && movies.length === 0 && !isHome && (
-                  <div className="flex flex-col items-center justify-center py-24 text-center">
-                    <AlertCircle className="w-20 h-20 text-zinc-800 mb-6" />
-                    <h3 className="text-3xl font-black text-white mb-3">{appLang === 'ru-RU' ? 'Ничего не найдено' : 'No Titles Found'}</h3>
-                    <p className="text-zinc-500 font-medium max-w-md">{error}</p>
-                  </div>
-                )}
-
-                {}
-                {isHome && (
-                  <div className="pb-12 max-w-screen-2xl mx-auto">
+                {/* Home Page Horizontal Rows (Only visible when isHome and no movie selected) */}
+                {isHome && !selectedMovie && (
+                  <div className="pb-8 max-w-screen-2xl mx-auto">
                     {loadingHome ? (
                        <div className="flex flex-col items-center justify-center py-32">
                          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-red-600 mb-6"></div>
@@ -925,6 +861,99 @@
                          ))}
                        </div>
                     )}
+                  </div>
+                )}
+
+                {/* ENDLESS SCROLL RESULTS SECTION (Search, Genre Browsing, OR Infinite Home Discover) */}
+                {!selectedMovie && (movies.length > 0 || !isHome) && (
+                  <div className="max-w-7xl mx-auto mt-4">
+                    {!loading && movies.length > 0 && (
+                      <h3 className="text-2xl font-medium text-zinc-400 mb-8 flex items-center gap-2">
+                        {browseContext === 'search' ? (
+                          <>{appLang === 'ru-RU' ? 'Результаты для' : 'Results for'} <span className="text-white font-bold">"{query}"</span></>
+                        ) : browseContext === 'genre' ? (
+                          <>{appLang === 'ru-RU' ? 'Категория:' : 'Browsing'} <span className="text-white font-bold">{activeGenre.genre} {activeGenre.type === 'movie' ? (appLang === 'ru-RU' ? '(Фильмы)' : 'Movies') : (appLang === 'ru-RU' ? '(Сериалы)' : 'TV Shows')}</span></>
+                        ) : (
+                          <>{appLang === 'ru-RU' ? 'Бесконечная Лента Рекомендаций' : 'Infinite Discover Feed'}</>
+                        )}
+                      </h3>
+                    )}
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6 gap-y-8 sm:gap-y-10">
+                      {movies.map((movie, index) => (
+                        <div 
+                          key={`${movie.id}-${index}`} 
+                          className="movie-card relative group cursor-pointer rounded-xl overflow-hidden bg-zinc-900 shadow-lg"
+                          onClick={() => playMovie(movie)}
+                        >
+                          <div className="aspect-[2/3] w-full relative">
+                            {movie.Poster !== 'N/A' ? (
+                              <img src={movie.Poster} alt={movie.Title} className="w-full h-full object-cover" loading="lazy" />
+                            ) : (
+                              <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-950 text-zinc-700 p-4 text-center">
+                                <Film className="w-12 h-12 mb-2 opacity-30" />
+                                <span className="text-xs font-bold tracking-widest">{appLang === 'ru-RU' ? 'НЕТ ПОСТЕРА' : 'NO POSTER'}</span>
+                              </div>
+                            )}
+                            
+                            {movie.imdbRating !== 'N/A' && movie.imdbRating !== '0.0' && (
+                               <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded-md flex items-center gap-1 border border-zinc-700/50 shadow-lg">
+                                  <Star className="w-3.5 h-3.5 text-yellow-500" />
+                                  <span className="text-white text-xs font-bold">{movie.imdbRating}</span>
+                               </div>
+                            )}
+
+                            <div className="poster-overlay absolute inset-0 flex flex-col items-center justify-center backdrop-blur-[2px]">
+                              <div className="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center transform scale-50 group-hover:scale-100 transition-transform duration-300 shadow-[0_0_30px_rgba(229,9,20,0.8)]">
+                                <Play className="w-6 h-6 text-white ml-1 pl-0.5" fill="currentColor" />
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="p-4 bg-zinc-900">
+                            <h4 className="text-white font-bold truncate text-sm mb-1" title={movie.Title}>{movie.Title}</h4>
+                            <div className="flex items-center justify-between">
+                               <p className="text-zinc-400 text-xs font-medium">{movie.Year}</p>
+                               <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-sm ${movie.Type === 'series' ? 'bg-blue-900/50 text-blue-400' : 'bg-red-900/50 text-red-400'}`}>
+                                  {movie.Type === 'series' ? 'TV' : 'Movie'}
+                               </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Infinite Scroll Sentinel / Loader */}
+                    {hasMore && (
+                       <div ref={lastElementRef} className="py-16 flex flex-col items-center justify-center">
+                          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-red-600 mb-4"></div>
+                          <span className="text-zinc-500 font-bold tracking-widest uppercase text-xs">{appLang === 'ru-RU' ? 'Загрузка...' : 'Loading More...'}</span>
+                       </div>
+                    )}
+                    
+                    {!hasMore && movies.length > 0 && !loading && (
+                       <div className="py-16 text-center text-zinc-600 font-bold uppercase tracking-widest text-sm">
+                          {appLang === 'ru-RU' ? 'Конец Списка' : 'End of Results'}
+                       </div>
+                    )}
+                  </div>
+                )}
+
+                {/* INITIAL LOADING & ERROR STATES */}
+                {loading && movies.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-32">
+                    <div className="relative w-20 h-20">
+                      <div className="absolute inset-0 border-4 border-zinc-800 rounded-full"></div>
+                      <div className="absolute inset-0 border-4 border-red-600 rounded-full border-t-transparent animate-spin"></div>
+                    </div>
+                  </div>
+                )}
+
+                {error && !loading && movies.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-24 text-center">
+                    <AlertCircle className="w-20 h-20 text-zinc-800 mb-6" />
+                    <h3 className="text-3xl font-black text-white mb-3">{appLang === 'ru-RU' ? 'Ничего не найдено' : 'No Titles Found'}</h3>
+                    <p className="text-zinc-500 font-medium max-w-md">{error}</p>
                   </div>
                 )}
               </main>
