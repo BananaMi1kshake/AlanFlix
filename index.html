@@ -494,7 +494,7 @@
                         id: 119, // Authentic TMDB ID
                         Title: 'Cory in the House',
                         Year: '2007',
-                        Poster: 'https://m.media-amazon.com/images/M/MV5BMTM0ODU1MjEzNF5BMl5BanBnXkFtZTcwNTI1MzYxMQ@@._V1_FMjpg_UX500_.jpg',
+                        Poster: 'https://upload.wikimedia.org/wikipedia/en/e/e0/Cory_in_the_House_title_card.jpg', // Unblockable Wikipedia image
                         Type: 'series',
                         imdbRating: '10.0', // Certified Masterpiece
                         Overview: 'Cory Baxter moves to the White House, instantly initiating the greatest anime arc in history.',
@@ -543,7 +543,13 @@
 
         const playMovie = async (movie, skipUrlUpdate = false) => {
           setSelectedMovie(movie); setIsHome(false); setSelectedEpisodeData(null); 
-          markWatched(movie);
+          
+          // Only mark as watched instantly if it's a Movie (because the player auto-loads).
+          // For TV Shows / Anime Series, wait until they click a specific episode!
+          if (movie.Type !== 'series') {
+             markWatched(movie);
+          }
+
           window.scrollTo({ top: 0, behavior: 'smooth' });
           if (!skipUrlUpdate) updateURL({ v: movie.id, type: movie.isAnime ? 'anime' : movie.Type });
 
