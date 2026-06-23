@@ -53,11 +53,6 @@
       /* Allow selection only for text content */
       input, p, h1, h2, h3, h4, span, strong { user-select: auto; }
 
-      /* PWA Safe Area Paddings for notched phones */
-      .safe-nav { padding-top: max(1rem, env(safe-area-inset-top)); }
-      .safe-main { padding-bottom: max(3rem, env(safe-area-inset-bottom)); }
-      .safe-fab { bottom: max(1.5rem, env(safe-area-inset-bottom)); }
-
       /* --- Intro Animation Styles --- */
       .intro-overlay {
         position: fixed;
@@ -190,7 +185,7 @@
     <script type="text/babel" data-presets="react-classic">
       const { useState, useEffect, useRef, useCallback } = React;
 
-      // Inline SVG Icons
+      // Inline SVG Icons (Added previously missing Clock icon to fix fatal render crash)
       const Search = ({ className }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>);
       const Play = ({ className, fill }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill={fill || "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>);
       const X = ({ className }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>);
@@ -200,6 +195,7 @@
       const ArrowUp = ({ className }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>);
       const Star = ({ className }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>);
       const CheckCircle = ({ className }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>);
+      const Clock = ({ className }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>);
 
       // TMDB Constants
       const TMDB_API_KEY = '81869d2e8c49e784b4958d77802dd1f3';
@@ -273,10 +269,12 @@
         const [isBrowseOpen, setIsBrowseOpen] = useState(false);
         const [showBackToTop, setShowBackToTop] = useState(false);
 
-        // Local Storage / History States
+        // Local Storage / History States with Safety Array Parsing
         const [watchedHistory, setWatchedHistory] = useState(() => {
-           try { return JSON.parse(localStorage.getItem('alanflix_history')) || []; }
-           catch { return []; }
+           try { 
+             const data = JSON.parse(localStorage.getItem('alanflix_history')); 
+             return Array.isArray(data) ? data : [];
+           } catch { return []; }
         });
 
         // Toggle Language Persistence
@@ -288,14 +286,18 @@
 
         const markWatched = (item) => {
            setWatchedHistory(prev => {
-              const filtered = prev.filter(m => m.id !== item.id);
+              const safePrev = Array.isArray(prev) ? prev : [];
+              const filtered = safePrev.filter(m => m.id !== item.id);
               const updated = [item, ...filtered].slice(0, 15); // Keep last 15 items
               try { localStorage.setItem('alanflix_history', JSON.stringify(updated)); } catch(e){}
               return updated;
            });
         };
 
-        const isWatched = (id) => watchedHistory.some(m => m.id === id);
+        const isWatched = (id) => {
+           const safeHistory = Array.isArray(watchedHistory) ? watchedHistory : [];
+           return safeHistory.some(m => m.id === id);
+        }
 
         // URL Routing Helpers
         const updateURL = (params) => {
@@ -583,7 +585,11 @@
               {/* Invisible Overlay to close Dropdown when clicking outside */}
               {isBrowseOpen && <div className="fixed inset-0 z-40" onClick={() => setIsBrowseOpen(false)}></div>}
 
-              <nav className="fixed top-0 w-full z-50 glass-nav px-4 sm:px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4 safe-nav">
+              {/* NAVIGATION BAR - FIXED WITH BULLETPROOF INLINE SAFE-AREA PADDING */}
+              <nav 
+                className="fixed top-0 w-full z-50 glass-nav px-4 sm:px-6 pb-4 flex flex-col md:flex-row justify-between items-center gap-4"
+                style={{ paddingTop: 'max(2.5rem, env(safe-area-inset-top))' }}
+              >
                 <div className="flex items-center justify-between w-full md:w-auto">
                    <div className="flex items-center gap-2 cursor-pointer" onClick={() => goHome()}>
                      <Film className="text-red-600 w-7 h-7 sm:w-8 sm:h-8" />
@@ -655,7 +661,10 @@
                 </div>
               </nav>
 
-              <main className="pt-40 sm:pt-36 pb-12 px-4 sm:px-6 lg:px-12 max-w-[100vw] overflow-x-hidden mx-auto safe-main">
+              <main 
+                className="px-4 sm:px-6 lg:px-12 max-w-[100vw] overflow-x-hidden mx-auto"
+                style={{ paddingTop: 'calc(10rem + env(safe-area-inset-top))', paddingBottom: 'max(3rem, env(safe-area-inset-bottom))' }}
+              >
                 
                 {/* Active Player / Details Section */}
                 {selectedMovie && (
@@ -1111,7 +1120,8 @@
               {showBackToTop && (
                  <button 
                     onClick={scrollToTop} 
-                    className="fixed right-6 p-4 bg-red-600 text-white rounded-full shadow-[0_0_20px_rgba(229,9,20,0.5)] hover:bg-red-700 hover:scale-110 transition-all z-50 animate-in fade-in zoom-in duration-300 safe-fab"
+                    className="fixed right-6 p-4 bg-red-600 text-white rounded-full shadow-[0_0_20px_rgba(229,9,20,0.5)] hover:bg-red-700 hover:scale-110 transition-all z-50 animate-in fade-in zoom-in duration-300"
+                    style={{ bottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
                     title={appLang === 'ru-RU' ? 'Наверх' : 'Back to top'}
                  >
                     <ArrowUp className="w-6 h-6" />
