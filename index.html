@@ -184,44 +184,12 @@
       const MOVIE_GENRES = ['Action', 'Comedy', 'Sci-Fi', 'Horror', 'Romance', 'Thriller', 'Drama', 'Animation'];
       const TV_GENRES = ['Action', 'Comedy', 'Science-Fiction', 'Horror', 'Romance', 'Thriller', 'Drama', 'Anime'];
 
-      // TMDB uses strict ID numbers for genres
-      const TMDB_MOVIE_GENRE_IDS = { 'Action': 28, 'Comedy': 35, 'Sci-Fi': 878, 'Horror': 27, 'Romance': 10749, 'Thriller': 53, 'Drama': 18, 'Animation': 16 };
-      const TMDB_TV_GENRE_IDS = { 'Action': 10759, 'Comedy': 35, 'Science-Fiction': 10765, 'Horror': 9648, 'Romance': 10749, 'Thriller': 9648, 'Drama': 18, 'Anime': 16 };
+      const RU_MOVIE_GENRES = ['Боевик', 'Комедия', 'Фантастика', 'Ужасы', 'Мелодрама', 'Триллер', 'Драма', 'Мультфильм'];
+      const RU_TV_GENRES = ['Боевик', 'Комедия', 'Фантастика', 'Ужасы', 'Мелодрама', 'Триллер', 'Драма', 'Аниме'];
 
-      const STREAMING_SERVERS = [
-        { name: 'VidLink', url: 'https://vidlink.pro/movie/' },
-        { name: 'SuperEmbed', url: 'https://superembed.stream/movie/' },
-        { name: 'VidSrc ME', url: 'https://vidsrc.me/embed/movie/' },
-        { name: 'Embed SU', url: 'https://embed.su/embed/movie/' },
-        { name: 'VidSrc PRO', url: 'https://vidsrc.pro/embed/movie/' },
-        { name: 'VidSrc IN', url: 'https://vidsrc.in/embed/movie/' },
-        { name: 'AutoEmbed', url: 'https://autoembed.co/movie/imdb/' },
-        { name: 'VidSrc NET', url: 'https://vidsrc.net/embed/movie/' },
-        { name: 'Smashy', url: 'https://embed.smashystream.com/playere.php?imdb=' },
-        { name: 'MultiEmbed', url: 'https://multiembed.mov/directstream.php?video_id=' },
-        { name: 'VidSrc RU', url: 'https://vidsrc-embed.ru/embed/movie/' },
-        { name: 'VidSrc CC', url: 'https://vidsrc.cc/v2/embed/movie/' }
-      ];
-
-      const TV_SERVERS = [
-        { name: 'VidLink', url: 'https://vidlink.pro/tv/' },
-        { name: 'SuperEmbed', url: 'https://superembed.stream/tv/' },
-        { name: 'VidSrc ME', url: 'https://vidsrc.me/embed/tv/' },
-        { name: 'Embed SU', url: 'https://embed.su/embed/tv/' },
-        { name: 'VidSrc PRO', url: 'https://vidsrc.pro/embed/tv/' },
-        { name: 'VidSrc IN', url: 'https://vidsrc.in/embed/tv/' },
-        { name: 'AutoEmbed', url: 'https://autoembed.co/tv/imdb/' },
-        { name: 'VidSrc NET', url: 'https://vidsrc.net/embed/tv/' },
-        { name: 'MultiEmbed', url: 'https://multiembed.mov/directstream.php?video_id=' },
-        { name: 'VidSrc CC', url: 'https://vidsrc.cc/v2/embed/tv/' }
-      ];
-
-      const getTVEmbedUrl = (serverUrl, imdbId, season, episode) => {
-        if (serverUrl.includes('autoembed.co')) return `${serverUrl}${imdbId}-${season}-${episode}`;
-        if (serverUrl.includes('vidlink.pro') || serverUrl.includes('superembed.stream') || serverUrl.includes('vidsrc')) return `${serverUrl}${imdbId}?season=${season}&episode=${episode}`;
-        if (serverUrl.includes('embed.su')) return `${serverUrl}${imdbId}/${season}/${episode}`;
-        return `${serverUrl}${imdbId}&s=${season}&e=${episode}`; 
-      };
+      // TMDB uses strict ID numbers for genres (Updated to map Russian words to same universal IDs)
+      const TMDB_MOVIE_GENRE_IDS = { 'Action': 28, 'Comedy': 35, 'Sci-Fi': 878, 'Horror': 27, 'Romance': 10749, 'Thriller': 53, 'Drama': 18, 'Animation': 16, 'Боевик': 28, 'Комедия': 35, 'Фантастика': 878, 'Ужасы': 27, 'Мелодрама': 10749, 'Триллер': 53, 'Драма': 18, 'Мультфильм': 16 };
+      const TMDB_TV_GENRE_IDS = { 'Action': 10759, 'Comedy': 35, 'Science-Fiction': 10765, 'Horror': 9648, 'Romance': 10749, 'Thriller': 9648, 'Drama': 18, 'Anime': 16, 'Боевик': 10759, 'Комедия': 35, 'Фантастика': 10765, 'Ужасы': 9648, 'Мелодрама': 10749, 'Триллер': 9648, 'Драма': 18, 'Аниме': 16 };
 
       // Custom Hook for Infinite Scrolling
       function useInfiniteScroll(callback, hasMore, loading) {
@@ -241,6 +209,7 @@
 
       function App() {
         // Global App States
+        const [appLang, setAppLang] = useState('en-US'); // Controls TMDB language and Server Pools
         const [introFinished, setIntroFinished] = useState(false);
         const [isHome, setIsHome] = useState(true);
         const [browseContext, setBrowseContext] = useState('search'); // 'search' or 'genre'
@@ -261,7 +230,6 @@
 
         // Player & Details States
         const [selectedMovie, setSelectedMovie] = useState(null);
-        const [activeServer, setActiveServer] = useState(STREAMING_SERVERS[0]);
         const [showEpisodes, setShowEpisodes] = useState([]);
         const [showSeasons, setShowSeasons] = useState([]);
         const [selectedSeason, setSelectedSeason] = useState(1);
@@ -276,10 +244,22 @@
           return () => clearTimeout(timer);
         }, []);
 
-        // Initial load for Home Page data
+        // Listen for Language Changes and auto-refresh current view
         useEffect(() => {
-          if (introFinished) fetchHomeData();
-        }, [introFinished]);
+          if (!introFinished) return;
+          if (isHome) {
+             fetchHomeData();
+          } else if (browseContext === 'search' && query.trim()) {
+             setPage(1);
+             fetchSearch(1, true);
+          } else if (browseContext === 'genre' && activeGenre) {
+             setPage(1);
+             loadGenreData(1, activeGenre.type, activeGenre.genre, true);
+          }
+          if (selectedMovie && selectedMovie.Type === 'series') {
+             fetchTVSeasons(selectedMovie.id);
+          }
+        }, [appLang, introFinished]);
 
         // Helper to format TMDB responses into our app's structure
         const mapTMDB = (results, type) => results.filter(i => i.poster_path).map(m => ({
@@ -295,25 +275,29 @@
         const fetchHomeData = async () => {
           setLoadingHome(true);
           try {
-            // Fetch everything instantly from TMDB's blazing fast endpoints
+            // Fetch everything instantly from TMDB's blazing fast endpoints, passing the chosen language
             const [trendingMovies, popularTV, newMovies, topMovies, actionTV, scifiMovies, comedyTV] = await Promise.all([
-              fetch(`${TMDB_BASE_URL}/trending/movie/week?api_key=${TMDB_API_KEY}`).then(r => r.json()),
-              fetch(`${TMDB_BASE_URL}/tv/popular?api_key=${TMDB_API_KEY}`).then(r => r.json()),
-              fetch(`${TMDB_BASE_URL}/movie/now_playing?api_key=${TMDB_API_KEY}`).then(r => r.json()),
-              fetch(`${TMDB_BASE_URL}/movie/top_rated?api_key=${TMDB_API_KEY}`).then(r => r.json()),
-              fetch(`${TMDB_BASE_URL}/discover/tv?api_key=${TMDB_API_KEY}&with_genres=10759`).then(r => r.json()),
-              fetch(`${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&with_genres=878`).then(r => r.json()),
-              fetch(`${TMDB_BASE_URL}/discover/tv?api_key=${TMDB_API_KEY}&with_genres=35`).then(r => r.json())
+              fetch(`${TMDB_BASE_URL}/trending/movie/week?api_key=${TMDB_API_KEY}&language=${appLang}`).then(r => r.json()),
+              fetch(`${TMDB_BASE_URL}/tv/popular?api_key=${TMDB_API_KEY}&language=${appLang}`).then(r => r.json()),
+              fetch(`${TMDB_BASE_URL}/movie/now_playing?api_key=${TMDB_API_KEY}&language=${appLang}`).then(r => r.json()),
+              fetch(`${TMDB_BASE_URL}/movie/top_rated?api_key=${TMDB_API_KEY}&language=${appLang}`).then(r => r.json()),
+              fetch(`${TMDB_BASE_URL}/discover/tv?api_key=${TMDB_API_KEY}&with_genres=10759&language=${appLang}`).then(r => r.json()),
+              fetch(`${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&with_genres=878&language=${appLang}`).then(r => r.json()),
+              fetch(`${TMDB_BASE_URL}/discover/tv?api_key=${TMDB_API_KEY}&with_genres=35&language=${appLang}`).then(r => r.json())
             ]);
 
+            const titles = appLang === 'ru-RU' 
+              ? ['В тренде сейчас', 'Популярные сериалы', 'Новинки', 'Лучшие фильмы', 'Боевики (Сериалы)', 'Шедевры фантастики', 'Комедийные сериалы']
+              : ['Trending Movies Now', 'Binge-Worthy TV Shows', 'New Releases', 'Top Rated Movies', 'Action Packed TV', 'Sci-Fi Masterpieces', 'Comedy Series'];
+
             setHomeData([
-              { title: 'Trending Movies Now', movies: mapTMDB(trendingMovies.results, 'movie') },
-              { title: 'Binge-Worthy TV Shows', movies: mapTMDB(popularTV.results, 'series') },
-              { title: 'New Releases', movies: mapTMDB(newMovies.results, 'movie') },
-              { title: 'Top Rated Movies', movies: mapTMDB(topMovies.results, 'movie') },
-              { title: 'Action Packed TV', movies: mapTMDB(actionTV.results, 'series') },
-              { title: 'Sci-Fi Masterpieces', movies: mapTMDB(scifiMovies.results, 'movie') },
-              { title: 'Comedy Series', movies: mapTMDB(comedyTV.results, 'series') }
+              { title: titles[0], movies: mapTMDB(trendingMovies.results, 'movie') },
+              { title: titles[1], movies: mapTMDB(popularTV.results, 'series') },
+              { title: titles[2], movies: mapTMDB(newMovies.results, 'movie') },
+              { title: titles[3], movies: mapTMDB(topMovies.results, 'movie') },
+              { title: titles[4], movies: mapTMDB(actionTV.results, 'series') },
+              { title: titles[5], movies: mapTMDB(scifiMovies.results, 'movie') },
+              { title: titles[6], movies: mapTMDB(comedyTV.results, 'series') }
             ]);
           } catch (err) {
             console.error('TMDB fetch failed:', err);
@@ -331,7 +315,7 @@
           const tmdbType = currentType === 'series' ? 'tv' : 'movie';
 
           try {
-            const response = await fetch(`${TMDB_BASE_URL}/search/${tmdbType}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&page=${pageNum}`);
+            const response = await fetch(`${TMDB_BASE_URL}/search/${tmdbType}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&page=${pageNum}&language=${appLang}`);
             const data = await response.json();
 
             if (data.results && data.results.length > 0) {
@@ -356,7 +340,7 @@
               const tmdbType = type === 'series' ? 'tv' : 'movie';
               const genreId = type === 'series' ? TMDB_TV_GENRE_IDS[genre] : TMDB_MOVIE_GENRE_IDS[genre];
               
-              const res = await fetch(`${TMDB_BASE_URL}/discover/${tmdbType}?api_key=${TMDB_API_KEY}&with_genres=${genreId}&page=${pageNum}&sort_by=popularity.desc`);
+              const res = await fetch(`${TMDB_BASE_URL}/discover/${tmdbType}?api_key=${TMDB_API_KEY}&with_genres=${genreId}&page=${pageNum}&sort_by=popularity.desc&language=${appLang}`);
               const data = await res.json();
               
               if (data.results && data.results.length > 0) {
@@ -414,38 +398,24 @@
            } else if (browseContext === 'genre') {
               loadGenreData(nextPage, activeGenre.type, activeGenre.genre, false);
            }
-        }, [page, loading, hasMore, browseContext, activeGenre, query]);
+        }, [page, loading, hasMore, browseContext, activeGenre, query, appLang]);
 
         const lastElementRef = useInfiniteScroll(loadMoreData, hasMore, loading);
 
         const playMovie = async (movie) => {
-          let finalMovie = { ...movie };
-          
-          // Before opening the player, ask TMDB for the official IMDb ID since our streaming servers need it
-          if (!finalMovie.imdbID) {
-             try {
-                const res = await fetch(`${TMDB_BASE_URL}/${movie.Type === 'series' ? 'tv' : 'movie'}/${movie.id}/external_ids?api_key=${TMDB_API_KEY}`);
-                const ids = await res.json();
-                finalMovie.imdbID = ids.imdb_id;
-             } catch(e) {
-                console.error('Failed to grab IMDb ID from TMDB');
-             }
-          }
-
-          setSelectedMovie(finalMovie);
+          setSelectedMovie(movie);
           setIsHome(false);
-          setActiveServer(finalMovie.Type === 'series' ? TV_SERVERS[0] : STREAMING_SERVERS[0]);
           setSelectedEpisodeData(null); 
           window.scrollTo({ top: 0, behavior: 'smooth' });
 
           // Fetch full seasons and episodes list from TMDB
-          if (finalMovie.Type === 'series') fetchTVSeasons(finalMovie.id);
+          if (movie.Type === 'series') fetchTVSeasons(movie.id);
         };
 
         const fetchTVSeasons = async (tmdbID) => {
           setLoadingEpisodes(true);
           try {
-            const res = await fetch(`${TMDB_BASE_URL}/tv/${tmdbID}?api_key=${TMDB_API_KEY}`);
+            const res = await fetch(`${TMDB_BASE_URL}/tv/${tmdbID}?api_key=${TMDB_API_KEY}&language=${appLang}`);
             const data = await res.json();
             
             // Extract all valid seasons (ignoring Season 0 which TMDB uses for "Specials")
@@ -469,7 +439,7 @@
         const fetchEpisodesForSeason = async (tmdbID, seasonNum) => {
            setLoadingEpisodes(true);
            try {
-              const res = await fetch(`${TMDB_BASE_URL}/tv/${tmdbID}/season/${seasonNum}?api_key=${TMDB_API_KEY}`);
+              const res = await fetch(`${TMDB_BASE_URL}/tv/${tmdbID}/season/${seasonNum}?api_key=${TMDB_API_KEY}&language=${appLang}`);
               const data = await res.json();
               
               const eps = data.episodes.map(ep => ({
@@ -509,11 +479,16 @@
 
         const getIframeSrc = () => {
           if (!selectedMovie) return '';
+          const baseUrl = selectedMovie.Type === 'series' ? 'https://www.vidking.net/embed/tv/' : 'https://www.vidking.net/embed/movie/';
+          
           if (selectedMovie.Type === 'series' && selectedEpisodeData) {
-            return getTVEmbedUrl(activeServer.url, selectedMovie.imdbID, selectedEpisodeData.season, selectedEpisodeData.number);
+            return `${baseUrl}${selectedMovie.id}/${selectedEpisodeData.season}/${selectedEpisodeData.number}`;
           }
-          return `${activeServer.url}${selectedMovie.imdbID}`;
+          return `${baseUrl}${selectedMovie.id}`;
         };
+
+        const currentMoviesGenres = appLang === 'ru-RU' ? RU_MOVIE_GENRES : MOVIE_GENRES;
+        const currentTvGenres = appLang === 'ru-RU' ? RU_TV_GENRES : TV_GENRES;
 
         return (
           <React.Fragment>
@@ -544,21 +519,21 @@
                   {/* Premium Browse Categories Dropdown */}
                   <div className="relative group z-50 w-full sm:w-auto">
                      <button className="flex items-center justify-center w-full gap-2 text-white font-semibold bg-zinc-900/90 px-5 py-2.5 border border-zinc-800 rounded-full hover:bg-zinc-800 hover:border-zinc-600 transition-all shadow-lg">
-                        Browse <ChevronDown className="w-4 h-4 transition-transform duration-300 group-hover:-rotate-180 text-red-500" />
+                        {appLang === 'ru-RU' ? 'Категории' : 'Browse'} <ChevronDown className="w-4 h-4 transition-transform duration-300 group-hover:-rotate-180 text-red-500" />
                      </button>
                      
                      <div className="absolute left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:right-0 mt-2 w-[90vw] max-w-sm sm:w-80 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.8)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 flex overflow-hidden backdrop-blur-xl">
                         <div className="w-1/2 border-r border-zinc-800 p-2 bg-black/20">
-                           <div className="text-[10px] font-black text-red-600 mb-2 px-3 pt-2 uppercase tracking-widest">Movies</div>
-                           {MOVIE_GENRES.map(g => (
+                           <div className="text-[10px] font-black text-red-600 mb-2 px-3 pt-2 uppercase tracking-widest">{appLang === 'ru-RU' ? 'Фильмы' : 'Movies'}</div>
+                           {currentMoviesGenres.map(g => (
                               <button key={g} onClick={() => selectGenre('movie', g)} className="block w-full text-left px-3 py-2 text-sm font-medium text-zinc-300 hover:bg-red-600 hover:text-white rounded-lg transition-colors">
                                  {g}
                               </button>
                            ))}
                         </div>
                         <div className="w-1/2 p-2 bg-black/20">
-                           <div className="text-[10px] font-black text-red-600 mb-2 px-3 pt-2 uppercase tracking-widest">TV Shows</div>
-                           {TV_GENRES.map(g => (
+                           <div className="text-[10px] font-black text-red-600 mb-2 px-3 pt-2 uppercase tracking-widest">{appLang === 'ru-RU' ? 'Сериалы' : 'TV Shows'}</div>
+                           {currentTvGenres.map(g => (
                               <button key={g} onClick={() => selectGenre('series', g)} className="block w-full text-left px-3 py-2 text-sm font-medium text-zinc-300 hover:bg-red-600 hover:text-white rounded-lg transition-colors">
                                  {g}
                               </button>
@@ -567,10 +542,16 @@
                      </div>
                   </div>
 
+                  {/* Language Type Toggle */}
+                  <div className="flex bg-zinc-900/80 p-1 rounded-full border border-zinc-800 w-full sm:w-auto justify-center">
+                     <button type="button" onClick={() => setAppLang('en-US')} className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all w-1/2 sm:w-auto ${appLang === 'en-US' ? 'bg-white text-black shadow-md' : 'text-zinc-400 hover:text-white'}`}>EN</button>
+                     <button type="button" onClick={() => setAppLang('ru-RU')} className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all w-1/2 sm:w-auto ${appLang === 'ru-RU' ? 'bg-white text-black shadow-md' : 'text-zinc-400 hover:text-white'}`}>RU</button>
+                  </div>
+
                   {/* Search Type Toggle */}
                   <div className="flex bg-zinc-900/80 p-1 rounded-full border border-zinc-800 w-full sm:w-auto justify-center">
-                     <button type="button" onClick={() => handleTypeToggle('movie')} className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all w-1/2 sm:w-auto ${searchType === 'movie' ? 'bg-red-600 text-white shadow-md' : 'text-zinc-400 hover:text-white'}`}>Movies</button>
-                     <button type="button" onClick={() => handleTypeToggle('series')} className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all w-1/2 sm:w-auto ${searchType === 'series' ? 'bg-red-600 text-white shadow-md' : 'text-zinc-400 hover:text-white'}`}>TV Shows</button>
+                     <button type="button" onClick={() => handleTypeToggle('movie')} className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all w-1/2 sm:w-auto ${searchType === 'movie' ? 'bg-red-600 text-white shadow-md' : 'text-zinc-400 hover:text-white'}`}>{appLang === 'ru-RU' ? 'Фильмы' : 'Movies'}</button>
+                     <button type="button" onClick={() => handleTypeToggle('series')} className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all w-1/2 sm:w-auto ${searchType === 'series' ? 'bg-red-600 text-white shadow-md' : 'text-zinc-400 hover:text-white'}`}>{appLang === 'ru-RU' ? 'Сериалы' : 'TV Shows'}</button>
                   </div>
 
                   {/* Search Bar */}
@@ -579,7 +560,7 @@
                       type="text"
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
-                      placeholder="Search for titles..."
+                      placeholder={appLang === 'ru-RU' ? 'Поиск...' : 'Search for titles...'}
                       className="w-full bg-zinc-900/80 border border-zinc-800 text-white rounded-full py-2.5 pl-5 pr-12 focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 transition-all placeholder-zinc-500 shadow-inner"
                     />
                     <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-zinc-400 hover:text-red-500 transition-colors">
@@ -617,42 +598,22 @@
 
                     {(selectedMovie.Type !== 'series' || selectedEpisodeData) && (
                       <>
-                        <div className="bg-zinc-900 rounded-xl p-4 mb-6 border border-zinc-800 shadow-xl">
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                            <span className="text-sm font-semibold text-zinc-400 tracking-wide uppercase">Select Mirror:</span>
-                            <button 
-                              onClick={() => {
-                                const list = selectedMovie.Type === 'series' ? TV_SERVERS : STREAMING_SERVERS;
-                                setActiveServer(list[(list.findIndex(s => s.name === activeServer.name) + 1) % list.length]);
-                              }}
-                              className="flex items-center justify-center gap-2 px-5 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-full transition-all shadow-[0_0_20px_rgba(229,9,20,0.4)]"
-                            >
-                              <Play className="w-4 h-4" fill="currentColor" /> Switch Server
-                            </button>
+                        {/* Russian Audio Instruction Banner */}
+                        {appLang === 'ru-RU' && (
+                          <div className="bg-red-950/40 border border-red-500/30 rounded-xl p-3 sm:p-4 mb-6 shadow-lg flex items-start sm:items-center gap-3 animate-in fade-in zoom-in duration-500">
+                            <AlertCircle className="w-6 h-6 text-red-500 shrink-0 mt-0.5 sm:mt-0" />
+                            <p className="text-zinc-300 text-sm sm:text-base leading-relaxed">
+                              <strong className="text-white tracking-wide">РУССКАЯ ОЗВУЧКА И СУБТИТРЫ:</strong> Если видео запустилось на английском, нажмите на значок <strong className="text-red-400">Настроек (Шестеренка)</strong> или <strong className="text-red-400">CC (Субтитры)</strong> внутри плеера, чтобы выбрать русский язык!
+                            </p>
                           </div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            {(selectedMovie.Type === 'series' ? TV_SERVERS : STREAMING_SERVERS).map((server) => (
-                              <button
-                                key={server.name}
-                                onClick={() => setActiveServer(server)}
-                                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all duration-300 ${
-                                  activeServer.name === server.name 
-                                    ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.4)] scale-105' 
-                                    : 'bg-zinc-950 text-zinc-400 hover:bg-zinc-800 hover:text-white border border-zinc-800'
-                                }`}
-                              >
-                                {server.name}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
+                        )}
                         
                         <div className="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-[0_0_80px_rgba(229,9,20,0.15)] ring-1 ring-zinc-800 mb-10">
                           <div className="absolute inset-0 flex items-center justify-center -z-10 bg-zinc-950">
                              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
                           </div>
                           <iframe
-                            key={activeServer.url + (selectedEpisodeData ? selectedEpisodeData.id : '')}
+                            key={selectedMovie.id + (selectedEpisodeData ? selectedEpisodeData.id : '')}
                             className="absolute inset-0 w-full h-full"
                             src={getIframeSrc()}
                             allowFullScreen
@@ -805,14 +766,14 @@
                     </div>
 
                     {/* Infinite Scroll Sentinel / Loader */}
-                    {hasMore && (
+                    {hasMore && !selectedMovie && (
                        <div ref={lastElementRef} className="py-16 flex flex-col items-center justify-center">
                           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-red-600 mb-4"></div>
                           <span className="text-zinc-500 font-bold tracking-widest uppercase text-xs">Loading More...</span>
                        </div>
                     )}
                     
-                    {!hasMore && movies.length > 0 && !loading && (
+                    {!hasMore && movies.length > 0 && !loading && !selectedMovie && (
                        <div className="py-16 text-center text-zinc-600 font-bold uppercase tracking-widest text-sm">
                           End of Results
                        </div>
@@ -820,8 +781,8 @@
                   </div>
                 )}
 
-                {/* INITIAL LOADING & ERROR STATES */}
-                {loading && movies.length === 0 && !isHome && (
+                {/* INITIAL LOADING & ERROR STATES (Hidden when a movie is selected) */}
+                {loading && movies.length === 0 && !isHome && !selectedMovie && (
                   <div className="flex flex-col items-center justify-center py-32">
                     <div className="relative w-20 h-20">
                       <div className="absolute inset-0 border-4 border-zinc-800 rounded-full"></div>
@@ -831,7 +792,7 @@
                   </div>
                 )}
 
-                {error && !loading && movies.length === 0 && (
+                {error && !loading && movies.length === 0 && !selectedMovie && (
                   <div className="flex flex-col items-center justify-center py-24 text-center">
                     <AlertCircle className="w-20 h-20 text-zinc-800 mb-6" />
                     <h3 className="text-3xl font-black text-white mb-3">No Titles Found</h3>
