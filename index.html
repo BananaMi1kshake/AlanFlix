@@ -185,7 +185,6 @@
     <script type="text/babel" data-presets="react-classic">
       const { useState, useEffect, useRef, useCallback } = React;
 
-      // Inline SVG Icons (Added previously missing Clock icon to fix fatal render crash)
       const Search = ({ className }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>);
       const Play = ({ className, fill }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill={fill || "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>);
       const X = ({ className }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>);
@@ -196,28 +195,38 @@
       const Star = ({ className }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>);
       const CheckCircle = ({ className }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>);
       const Clock = ({ className }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>);
+      const ShareIcon = ({ className }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>);
+      const TvIcon = ({ className }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect><polyline points="17 2 12 7 7 2"></polyline></svg>);
+      const ZapIcon = ({ className }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>);
 
       // TMDB Constants
       const TMDB_API_KEY = '81869d2e8c49e784b4958d77802dd1f3';
       const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
       const TMDB_IMG_BASE = 'https://image.tmdb.org/t/p/w500';
 
-      const EN_MOVIE_GENRES = { 'Action': 28, 'Comedy': 35, 'Sci-Fi': 878, 'Horror': 27, 'Romance': 10749, 'Thriller': 53, 'Drama': 18, 'Animation': 16, 'Crime': 80, 'Mystery': 9648 };
-      const RU_MOVIE_GENRES = { 'Боевик': 28, 'Комедия': 35, 'Фантастика': 878, 'Ужасы': 27, 'Мелодрама': 10749, 'Триллер': 53, 'Драма': 18, 'Мультфильм': 16, 'Криминал': 80, 'Детектив': 9648 };
+      const EN_GENRES = { 'Action': 28, 'Comedy': 35, 'Sci-Fi': 878, 'Horror': 27, 'Romance': 10749, 'Thriller': 53, 'Drama': 18, 'Animation': 16, 'Crime': 80, 'Mystery': 9648 };
+      const RU_GENRES = { 'Боевик': 28, 'Комедия': 35, 'Фантастика': 878, 'Ужасы': 27, 'Мелодрама': 10749, 'Триллер': 53, 'Драма': 18, 'Мультфильм': 16, 'Криминал': 80, 'Детектив': 9648 };
 
-      const EN_TV_GENRES = { 'Action & Adv': 10759, 'Comedy': 35, 'Sci-Fi & Fantasy': 10765, 'Drama': 18, 'Animation': 16, 'Crime': 80, 'Mystery': 9648, 'Kids': 10762, 'Reality': 10764, 'Documentary': 99 };
-      const RU_TV_GENRES = { 'Боевик и Прикл': 10759, 'Комедия': 35, 'Фантастика': 10765, 'Драма': 18, 'Мультфильм': 16, 'Криминал': 80, 'Детектив': 9648, 'Детские': 10762, 'Реалити': 10764, 'Документальный': 99 };
+      const EN_TV_GENRES = { 'Action & Adventure': 10759, 'Comedy': 35, 'Sci-Fi & Fantasy': 10765, 'Drama': 18, 'Animation': 16, 'Crime': 80, 'Mystery': 9648 };
+      const RU_TV_GENRES = { 'Боевик и Приключения': 10759, 'Комедия': 35, 'Фантастика': 10765, 'Драма': 18, 'Мультфильм': 16, 'Криминал': 80, 'Детектив': 9648 };
 
       // Helper to map TMDB item to universal app format
-      const mapTMDBItem = (item, defaultType = 'movie') => ({
-          id: item.id,
-          Title: item.title || item.name,
-          Year: (item.release_date || item.first_air_date || 'N/A').substring(0, 4),
-          Poster: item.poster_path ? `${TMDB_IMG_BASE}${item.poster_path}` : 'N/A',
-          Type: item.media_type || defaultType,
-          imdbRating: item.vote_average ? item.vote_average.toFixed(1) : 'N/A',
-          Overview: item.overview || ''
-      });
+      const mapTMDBItem = (item, defaultType = 'movie') => {
+          const isAnime = item.original_language === 'ja' && (
+              (item.genre_ids && item.genre_ids.includes(16)) || 
+              (item.genres && item.genres.some(g => g.id === 16))
+          );
+          return {
+              id: item.id,
+              Title: item.title || item.name,
+              Year: (item.release_date || item.first_air_date || 'N/A').substring(0, 4),
+              Poster: item.poster_path ? `${TMDB_IMG_BASE}${item.poster_path}` : 'N/A',
+              Type: item.media_type || defaultType,
+              imdbRating: item.vote_average ? item.vote_average.toFixed(1) : 'N/A',
+              Overview: item.overview || '',
+              isAnime: isAnime
+          };
+      };
 
       // Custom Hook for Infinite Scrolling
       function useInfiniteScroll(callback, hasMore, loading) {
@@ -271,8 +280,9 @@
         // UI Interaction States
         const [isBrowseOpen, setIsBrowseOpen] = useState(false);
         const [showBackToTop, setShowBackToTop] = useState(false);
+        const [shareText, setShareText] = useState(appLang === 'ru-RU' ? 'Поделиться' : 'Share');
 
-        // Local Storage / History States
+        // Local Storage / History States with Safety Array Parsing
         const [watchedHistory, setWatchedHistory] = useState(() => {
            try { 
              const data = JSON.parse(localStorage.getItem('alanflix_history')); 
@@ -328,9 +338,10 @@
 
             if (v) {
               try {
-                const res = await fetch(`${TMDB_BASE_URL}/${type === 'series' ? 'tv' : 'movie'}/${v}?api_key=${TMDB_API_KEY}&language=${appLang}`);
+                // If it's anime, the Type might be series, but mapTMDBItem handles it
+                const res = await fetch(`${TMDB_BASE_URL}/${type === 'series' || type === 'anime' ? 'tv' : 'movie'}/${v}?api_key=${TMDB_API_KEY}&language=${appLang}`);
                 const m = await res.json();
-                if (m.id) playMovie(mapTMDBItem(m, type), true);
+                if (m.id) playMovie(mapTMDBItem(m, type === 'anime' ? 'series' : type), true);
               } catch (e) {}
             } else if (q) {
               setQuery(q); setDebouncedQuery(q); setIsHome(false); setBrowseContext('search');
@@ -391,42 +402,45 @@
         const fetchHomeData = async () => {
           setLoadingHome(true);
           try {
-            const [trendingMov, trendingTv] = await Promise.all([
+            const [trendingMov, trendingTv, trendingAnime] = await Promise.all([
               fetch(`${TMDB_BASE_URL}/trending/movie/week?api_key=${TMDB_API_KEY}&language=${appLang}`).then(r => r.json()),
-              fetch(`${TMDB_BASE_URL}/trending/tv/week?api_key=${TMDB_API_KEY}&language=${appLang}`).then(r => r.json())
+              fetch(`${TMDB_BASE_URL}/trending/tv/week?api_key=${TMDB_API_KEY}&language=${appLang}`).then(r => r.json()),
+              fetch(`${TMDB_BASE_URL}/discover/tv?api_key=${TMDB_API_KEY}&language=${appLang}&with_genres=16&with_original_language=ja&sort_by=popularity.desc`).then(r => r.json())
             ]);
 
             setHomeData([
-              { title: appLang === 'ru-RU' ? 'Популярные Фильмы' : 'Trending Movies', movies: trendingMov.results.map(m => mapTMDBItem(m, 'movie')) },
-              { title: appLang === 'ru-RU' ? 'Популярные Сериалы' : 'Trending TV Shows', movies: trendingTv.results.map(s => mapTMDBItem(s, 'series')) }
+              { title: appLang === 'ru-RU' ? 'Популярные Фильмы' : 'Trending Movies', movies: trendingMov.results.map(m => mapTMDBItem(m, 'movie')).filter(m => !m.isAnime) },
+              { title: appLang === 'ru-RU' ? 'Популярные Сериалы' : 'Trending TV Shows', movies: trendingTv.results.map(s => mapTMDBItem(s, 'series')).filter(s => !s.isAnime) },
+              { title: appLang === 'ru-RU' ? 'Популярное Аниме' : 'Trending Anime', movies: trendingAnime.results.map(s => mapTMDBItem(s, 'series')) }
             ]);
-          } catch (err) { console.error(err); } finally { setLoadingHome(false); }
+          } catch (err) { console.error(err); } finally { setLoadingHome(false); setLoading(false); }
         };
 
         const loadHomeGridData = async (pageNum, isNew = false) => {
            if (isNew) setHomeGrid([]);
-           setLoading(true);
            try {
-              const res = await fetch(`${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&language=${appLang}&sort_by=popularity.desc&page=${pageNum}`);
+              const res = await fetch(`${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&language=${appLang}&sort_by=popularity.desc&page=${pageNum}&without_keywords=210024`);
               const data = await res.json();
               if (data.results) {
-                 const newItems = data.results.map(m => mapTMDBItem(m, 'movie'));
+                 const newItems = data.results.map(m => mapTMDBItem(m, 'movie')).filter(m => !m.isAnime);
                  setHomeGrid(prev => isNew ? newItems : [...prev, ...newItems]);
                  setHasMore(pageNum < data.total_pages);
               }
-           } catch (err) {} finally { setLoading(false); }
+           } catch (err) {}
         };
 
         const fetchSearch = async (pageNum, typeParam, qParam, isNew = false) => {
           if (isNew) { setLoading(true); setMovies([]); }
           setError(null);
           try {
-            const endpt = typeParam === 'series' ? 'search/tv' : 'search/movie';
+            const endpt = (typeParam === 'series' || typeParam === 'anime') ? 'search/tv' : 'search/movie';
             const response = await fetch(`${TMDB_BASE_URL}/${endpt}?api_key=${TMDB_API_KEY}&language=${appLang}&query=${encodeURIComponent(qParam)}&page=${pageNum}`);
             const data = await response.json();
 
             if (data.results && data.results.length > 0) {
-              const newItems = data.results.map(m => mapTMDBItem(m, typeParam));
+              let newItems = data.results.map(m => mapTMDBItem(m, typeParam === 'anime' ? 'series' : typeParam));
+              newItems = newItems.filter(m => typeParam === 'anime' ? m.isAnime : !m.isAnime);
+              
               setMovies(prev => isNew ? newItems : [...prev, ...newItems]);
               setHasMore(pageNum < data.total_pages); 
             } else {
@@ -442,27 +456,32 @@
            if (isNew) { setLoading(true); setMovies([]); }
            setError(null);
            try {
-              let genreId;
-              if (typeParam === 'series') {
-                  genreId = (appLang === 'ru-RU' ? RU_TV_GENRES : EN_TV_GENRES)[genreName];
+              let url;
+              if (typeParam === 'anime') {
+                 url = `${TMDB_BASE_URL}/discover/tv?api_key=${TMDB_API_KEY}&language=${appLang}&with_genres=16&with_original_language=ja&page=${pageNum}&sort_by=popularity.desc`;
               } else {
-                  genreId = (appLang === 'ru-RU' ? RU_MOVIE_GENRES : EN_MOVIE_GENRES)[genreName];
+                 const genresDict = typeParam === 'series' 
+                     ? (appLang === 'ru-RU' ? RU_TV_GENRES : EN_TV_GENRES)
+                     : (appLang === 'ru-RU' ? RU_GENRES : EN_GENRES);
+                 const genreId = genresDict[genreName];
+                 const endpt = typeParam === 'series' ? 'discover/tv' : 'discover/movie';
+                 url = `${TMDB_BASE_URL}/${endpt}?api_key=${TMDB_API_KEY}&language=${appLang}&with_genres=${genreId}&page=${pageNum}&sort_by=popularity.desc&without_keywords=210024`;
               }
-              const endpt = typeParam === 'series' ? 'discover/tv' : 'discover/movie';
               
-              const res = await fetch(`${TMDB_BASE_URL}/${endpt}?api_key=${TMDB_API_KEY}&language=${appLang}&with_genres=${genreId}&page=${pageNum}&sort_by=popularity.desc`);
+              const res = await fetch(url);
               const data = await res.json();
               
               if (data.results && data.results.length > 0) {
-                 const newItems = data.results.map(m => mapTMDBItem(m, typeParam));
+                 let newItems = data.results.map(m => mapTMDBItem(m, typeParam === 'anime' ? 'series' : typeParam));
+                 newItems = newItems.filter(m => typeParam === 'anime' ? m.isAnime : !m.isAnime);
                  setMovies(prev => isNew ? newItems : [...prev, ...newItems]);
                  setHasMore(pageNum < data.total_pages);
               } else {
-                 if (isNew) setError('No titles found for this genre.');
+                 if (isNew) setError(appLang === 'ru-RU' ? 'Ничего не найдено.' : 'No titles found for this genre.');
                  setHasMore(false);
               }
            } catch (err) {
-              if (isNew) setError(`Failed to fetch ${genreName} titles.`);
+              if (isNew) setError(`Failed to fetch titles.`);
            } finally { setLoading(false); }
         };
 
@@ -496,7 +515,7 @@
           setSelectedMovie(movie); setIsHome(false); setSelectedEpisodeData(null); 
           markWatched(movie);
           window.scrollTo({ top: 0, behavior: 'smooth' });
-          if (!skipUrlUpdate) updateURL({ v: movie.id, type: movie.Type });
+          if (!skipUrlUpdate) updateURL({ v: movie.id, type: movie.isAnime ? 'anime' : movie.Type });
 
           fetchMovieDetails(movie.id, movie.Type);
           if (movie.Type === 'series') fetchTVSeasons(movie.id);
@@ -563,6 +582,27 @@
           } else { goHome(); }
         };
 
+        const handleShare = async () => {
+           if (!selectedMovie) return;
+           const url = window.location.href;
+           const title = `Watch ${selectedMovie.Title} on AlanFlix`;
+           
+           if (navigator.share) {
+              try { await navigator.share({ title: title, url: url }); } catch(e){}
+           } else {
+              try {
+                 const textArea = document.createElement("textarea");
+                 textArea.value = url;
+                 document.body.appendChild(textArea);
+                 textArea.select();
+                 document.execCommand("copy");
+                 document.body.removeChild(textArea);
+                 setShareText(appLang === 'ru-RU' ? 'Скопировано!' : 'Copied!');
+                 setTimeout(() => setShareText(appLang === 'ru-RU' ? 'Поделиться' : 'Share'), 2000);
+              } catch(e){}
+           }
+        };
+
         const getIframeSrc = () => {
           if (!selectedMovie) return '';
           const baseUrl = selectedMovie.Type === 'series' ? 'https://www.vidking.net/embed/tv/' : 'https://www.vidking.net/embed/movie/';
@@ -572,8 +612,8 @@
           return `${baseUrl}${selectedMovie.id}`;
         };
 
-        const currentMovieGenres = appLang === 'ru-RU' ? Object.keys(RU_MOVIE_GENRES) : Object.keys(EN_MOVIE_GENRES);
-        const currentTVGenres = appLang === 'ru-RU' ? Object.keys(RU_TV_GENRES) : Object.keys(EN_TV_GENRES);
+        const currentMovieGenres = appLang === 'ru-RU' ? Object.keys(RU_GENRES) : Object.keys(EN_GENRES);
+        const currentTvGenres = appLang === 'ru-RU' ? Object.keys(RU_TV_GENRES) : Object.keys(EN_TV_GENRES);
 
         return (
           <React.Fragment>
@@ -630,26 +670,38 @@
                      </div>
                   </div>
 
-                  {/* Shared Dropdown Modal */}
-                  <div className={`absolute top-full left-0 md:left-auto right-0 md:right-[350px] mt-2 w-full md:w-[400px] bg-zinc-900 border border-zinc-800 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.9)] transition-all duration-200 flex overflow-hidden backdrop-blur-xl ${isBrowseOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'}`}>
-                     <div className="w-1/2 border-r border-zinc-800 p-2 bg-black/20">
-                        <div className="text-[10px] font-black text-red-600 mb-2 px-3 pt-2 uppercase tracking-widest">{appLang === 'ru-RU' ? 'Фильмы' : 'Movies'}</div>
-                        {currentMovieGenres.map(g => (
-                           <button key={g} onClick={() => selectGenre('movie', g)} className="block w-full text-left px-3 py-2 text-sm font-medium text-zinc-300 hover:bg-red-600 hover:text-white rounded-lg transition-colors">{g}</button>
-                        ))}
+                  {/* Shared Dropdown Modal with Anime Separation */}
+                  <div className={`absolute top-full left-0 md:left-auto right-0 md:right-[350px] mt-2 w-full md:w-[400px] bg-zinc-900 border border-zinc-800 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.9)] transition-all duration-200 flex flex-col overflow-hidden backdrop-blur-xl ${isBrowseOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'}`}>
+                     <div className="flex">
+                        <div className="w-1/2 border-r border-zinc-800 p-2 bg-black/20">
+                           <div className="text-[10px] font-black text-red-600 mb-2 px-3 pt-2 uppercase tracking-widest">{appLang === 'ru-RU' ? 'Фильмы' : 'Movies'}</div>
+                           {currentMovieGenres.map(g => (
+                              <button key={`mov-${g}`} onClick={() => selectGenre('movie', g)} className="block w-full text-left px-3 py-2 text-sm font-medium text-zinc-300 hover:bg-red-600 hover:text-white rounded-lg transition-colors">{g}</button>
+                           ))}
+                        </div>
+                        <div className="w-1/2 p-2 bg-black/20">
+                           <div className="text-[10px] font-black text-red-600 mb-2 px-3 pt-2 uppercase tracking-widest">{appLang === 'ru-RU' ? 'Сериалы' : 'TV Shows'}</div>
+                           {currentTvGenres.map(g => (
+                              <button key={`tv-${g}`} onClick={() => selectGenre('series', g)} className="block w-full text-left px-3 py-2 text-sm font-medium text-zinc-300 hover:bg-red-600 hover:text-white rounded-lg transition-colors">{g}</button>
+                           ))}
+                        </div>
                      </div>
-                     <div className="w-1/2 p-2 bg-black/20">
-                        <div className="text-[10px] font-black text-red-600 mb-2 px-3 pt-2 uppercase tracking-widest">{appLang === 'ru-RU' ? 'Сериалы' : 'TV Shows'}</div>
-                        {currentTVGenres.map(g => (
-                           <button key={g} onClick={() => selectGenre('series', g)} className="block w-full text-left px-3 py-2 text-sm font-medium text-zinc-300 hover:bg-red-600 hover:text-white rounded-lg transition-colors">{g}</button>
-                        ))}
+                     <div className="border-t border-zinc-800 bg-zinc-950/50 hover:bg-red-600/20 transition-colors">
+                        <button onClick={() => selectGenre('anime', 'Anime')} className="w-full py-4 flex items-center justify-center gap-2 text-red-500 font-bold uppercase tracking-widest text-sm hover:text-red-400">
+                           <ZapIcon className="w-4 h-4" /> {appLang === 'ru-RU' ? 'Аниме Каталог' : 'Anime Catalog'}
+                        </button>
                      </div>
                   </div>
 
-                  {/* Search Bar & Type Toggle */}
+                  {/* Tri-State Search Bar & Type Toggle */}
                   <div className="flex w-full md:w-[350px] bg-zinc-900/80 border border-zinc-800 rounded-full shadow-inner overflow-hidden">
-                     <button onClick={() => setSearchType(searchType === 'movie' ? 'series' : 'movie')} className="flex items-center gap-1.5 px-4 text-xs font-bold text-zinc-300 bg-zinc-800/50 hover:bg-zinc-700 transition-colors border-r border-zinc-800 shrink-0">
-                        <Film className="w-3.5 h-3.5 text-red-500" /> {searchType === 'movie' ? (appLang === 'ru-RU' ? 'Фильмы' : 'Movie') : (appLang === 'ru-RU' ? 'ТВ' : 'TV')}
+                     <button 
+                        onClick={() => setSearchType(prev => prev === 'movie' ? 'series' : prev === 'series' ? 'anime' : 'movie')} 
+                        className="flex items-center justify-center gap-1.5 px-3 min-w-[85px] text-xs font-bold text-zinc-300 bg-zinc-800/50 hover:bg-zinc-700 transition-colors border-r border-zinc-800 shrink-0"
+                     >
+                        {searchType === 'movie' && <><Film className="w-3.5 h-3.5 text-red-500" /> {appLang === 'ru-RU' ? 'Фильмы' : 'Movie'}</>}
+                        {searchType === 'series' && <><TvIcon className="w-3.5 h-3.5 text-blue-500" /> {appLang === 'ru-RU' ? 'ТВ' : 'TV'}</>}
+                        {searchType === 'anime' && <><ZapIcon className="w-3.5 h-3.5 text-yellow-500" /> {appLang === 'ru-RU' ? 'Аниме' : 'Anime'}</>}
                      </button>
                      <div className="relative flex-1">
                         <input
@@ -671,14 +723,22 @@
               </nav>
 
               <main 
-                className="px-4 sm:px-6 lg:px-12 max-w-[100vw] overflow-x-hidden mx-auto"
-                style={{ paddingTop: 'calc(11rem + env(safe-area-inset-top))', paddingBottom: 'max(3rem, env(safe-area-inset-bottom))' }}
+                className="px-4 sm:px-6 lg:px-12 max-w-[100vw] overflow-x-hidden mx-auto relative"
+                style={{ paddingTop: 'calc(10rem + env(safe-area-inset-top))', paddingBottom: 'max(3rem, env(safe-area-inset-bottom))' }}
               >
                 
                 {/* Active Player / Details Section */}
                 {selectedMovie && (
-                  <div className="w-full max-w-7xl mx-auto mb-16 animate-in fade-in slide-in-from-bottom-8 duration-700">
-                    <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6">
+                  <div className="w-full max-w-7xl mx-auto mb-16 animate-in fade-in slide-in-from-bottom-8 duration-700 relative z-10">
+                    
+                    {/* Cinematic Ambient Glow */}
+                    {selectedMovie.Poster !== 'N/A' && (
+                       <div className="absolute inset-0 -z-20 scale-110 blur-3xl opacity-30 pointer-events-none">
+                          <img src={selectedMovie.Poster} className="w-full h-full object-cover" alt="glow" />
+                       </div>
+                    )}
+
+                    <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6">
                       <h2 className="text-2xl sm:text-4xl font-bold text-white flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 leading-tight">
                         <div className="flex items-center gap-3">
                           <span className="w-2 h-8 sm:h-10 bg-red-600 rounded-full shrink-0"></span>
@@ -692,30 +752,31 @@
                           {selectedEpisodeData && <span className="ml-2 text-red-500 font-bold bg-red-950/50 px-3 py-1 rounded-full text-base sm:text-lg whitespace-nowrap">S{selectedEpisodeData.season_number} E{selectedEpisodeData.episode_number}</span>}
                         </div>
                       </h2>
-                      <button onClick={closePlayer} className="flex items-center justify-center gap-2 px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full transition-colors whitespace-nowrap font-medium self-start sm:self-auto">
-                        <X className="w-5 h-5" /> <span>{appLang === 'ru-RU' ? 'Закрыть' : 'Close'}</span>
-                      </button>
+                      <div className="flex items-center gap-2 self-start md:self-auto">
+                         <button onClick={handleShare} className="flex items-center justify-center gap-2 px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full transition-colors whitespace-nowrap font-medium border border-zinc-700 shadow-lg">
+                           <ShareIcon className="w-4 h-4" /> <span>{shareText}</span>
+                         </button>
+                         <button onClick={closePlayer} className="flex items-center justify-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-full transition-colors whitespace-nowrap font-medium shadow-[0_0_20px_rgba(229,9,20,0.4)]">
+                           <X className="w-5 h-5" /> <span>{appLang === 'ru-RU' ? 'Закрыть' : 'Close'}</span>
+                         </button>
+                      </div>
                     </div>
 
                     {(selectedMovie.Type !== 'series' || selectedEpisodeData) && (
                       <>
                         {/* Russian Audio Instruction Banner */}
                         {appLang === 'ru-RU' && (
-                          <div className="bg-red-950/40 border border-red-500/30 rounded-xl p-3 sm:p-4 mb-6 shadow-lg flex items-start sm:items-center gap-3 animate-in fade-in zoom-in duration-500">
+                          <div className="bg-zinc-900/80 border border-red-500/30 rounded-xl p-3 sm:p-4 mb-6 shadow-xl flex items-start sm:items-center gap-3 backdrop-blur-md animate-in fade-in zoom-in duration-500">
                             <AlertCircle className="w-6 h-6 text-red-500 shrink-0 mt-0.5 sm:mt-0" />
-                            <div className="flex-1">
-                               <p className="text-zinc-300 text-sm sm:text-base leading-relaxed">
-                                 <strong className="text-white tracking-wide">РУССКАЯ ОЗВУЧКА И СУБТИТРЫ:</strong> Если видео запустилось на английском, нажмите на значок <strong className="text-red-400">Настроек (Шестеренка)</strong> или <strong className="text-red-400">CC (Субтитры)</strong> внутри плеера, чтобы выбрать русский язык!
-                               </p>
-                               <p className="text-red-400/80 text-xs font-medium mt-1.5 md:hidden">
-                                 💡 Для удобного выбора качества и озвучки на телефоне, рекомендуем развернуть плеер на весь экран.
-                               </p>
-                            </div>
+                            <p className="text-zinc-300 text-sm sm:text-base leading-relaxed">
+                              <strong className="text-white tracking-wide">РУССКАЯ ОЗВУЧКА И СУБТИТРЫ:</strong> Если видео на английском, нажмите на значок <strong className="text-red-400">Настроек (Шестеренка)</strong> внутри плеера! 
+                              <span className="block mt-1 text-xs sm:hidden text-zinc-400 italic">Совет: Раскройте видео на весь экран для удобного выбора в меню!</span>
+                            </p>
                           </div>
                         )}
                         
-                        {/* Video Player Container with Mobile Min-Height Fix */}
-                        <div className="relative w-full aspect-video min-h-[400px] sm:min-h-[450px] md:min-h-[500px] bg-black rounded-2xl overflow-hidden shadow-[0_0_80px_rgba(229,9,20,0.15)] ring-1 ring-zinc-800 mb-8">
+                        {/* Responsive Mobile Iframe Player - Minimum Height fixes squished menus! */}
+                        <div className="relative w-full bg-black rounded-2xl overflow-hidden shadow-[0_0_80px_rgba(229,9,20,0.15)] ring-1 ring-zinc-800 mb-8 min-h-[400px]" style={{ paddingTop: '56.25%' }}>
                           <div className="absolute inset-0 flex items-center justify-center -z-10 bg-zinc-950">
                              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
                           </div>
@@ -734,7 +795,7 @@
 
                     {/* MOVIE DETAILS (Plot & Cast) */}
                     {movieDetails && (
-                       <div className="bg-zinc-900/60 rounded-3xl p-6 sm:p-8 border border-zinc-800/80 backdrop-blur-xl shadow-xl mb-10">
+                       <div className="bg-zinc-900/80 rounded-3xl p-6 sm:p-8 border border-zinc-800/80 backdrop-blur-xl shadow-xl mb-10">
                           <div className="flex flex-col lg:flex-row gap-8">
                              <div className="flex-1">
                                 <h3 className="text-xl font-bold text-white mb-3">{appLang === 'ru-RU' ? 'Сюжет' : 'Synopsis'}</h3>
@@ -774,7 +835,7 @@
 
                     {/* TV Show Episode Browser */}
                     {selectedMovie.Type === 'series' && (
-                       <div className="bg-zinc-900/60 rounded-3xl p-6 sm:p-8 border border-zinc-800/80 backdrop-blur-xl shadow-2xl mb-10">
+                       <div className="bg-zinc-900/80 rounded-3xl p-6 sm:p-8 border border-zinc-800/80 backdrop-blur-xl shadow-2xl mb-10">
                           {loadingEpisodes ? (
                              <div className="flex flex-col items-center justify-center py-20">
                                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mb-4"></div>
@@ -811,8 +872,8 @@
                                           selectedEpisodeData?.id === episode.id 
                                             ? 'bg-zinc-800 ring-2 ring-red-500 shadow-[0_10px_30px_rgba(229,9,20,0.2)] transform scale-[1.01]' 
                                             : hasWatched 
-                                               ? 'bg-zinc-950/30 hover:bg-zinc-800/80 border border-zinc-800/50 opacity-80'
-                                               : 'bg-zinc-950/60 hover:bg-zinc-800 border border-transparent hover:border-zinc-700'
+                                               ? 'bg-zinc-950/50 hover:bg-zinc-800/80 border border-zinc-800/50 opacity-80'
+                                               : 'bg-zinc-950/80 hover:bg-zinc-800 border border-transparent hover:border-zinc-700'
                                         }`}
                                       >
                                         <div className="w-full md:w-64 aspect-video bg-zinc-900 rounded-xl overflow-hidden shrink-0 relative group shadow-md">
@@ -865,7 +926,7 @@
                              {recommendations.map((movie, index) => (
                                <div 
                                  key={`${movie.id}-${index}`} 
-                                 className="movie-card flex-none w-36 sm:w-44 md:w-48 lg:w-56 relative group cursor-pointer rounded-xl overflow-hidden bg-zinc-900 snap-start shadow-lg"
+                                 className="movie-card flex-none w-36 sm:w-44 md:w-48 lg:w-56 relative group cursor-pointer rounded-xl overflow-hidden bg-zinc-900 snap-start shadow-lg ring-1 ring-zinc-800"
                                  onClick={() => playMovie(movie)}
                                >
                                  <div className="aspect-[2/3] w-full relative">
@@ -909,6 +970,7 @@
                   </div>
                 )}
 
+                {}
                 {/* ENDLESS SCROLL RESULTS SECTION (Search OR Genre Browsing) */}
                 {!isHome && !selectedMovie && (
                   <div className="max-w-7xl mx-auto">
@@ -917,14 +979,14 @@
                         {browseContext === 'search' ? (
                           <>{appLang === 'ru-RU' ? 'Результаты для' : 'Results for'} <span className="text-white font-bold">"{debouncedQuery}"</span></>
                         ) : (
-                          <>{appLang === 'ru-RU' ? 'Просмотр' : 'Browsing'} <span className="text-white font-bold">{activeGenre.genre} {activeGenre.type === 'movie' ? (appLang === 'ru-RU' ? 'Фильмы' : 'Movies') : (appLang === 'ru-RU' ? 'Сериалы' : 'TV Shows')}</span></>
+                          <>{appLang === 'ru-RU' ? 'Просмотр' : 'Browsing'} <span className="text-white font-bold">{activeGenre.type === 'anime' ? (appLang === 'ru-RU' ? 'Аниме' : 'Anime') : activeGenre.genre} {activeGenre.type === 'movie' ? (appLang === 'ru-RU' ? 'Фильмы' : 'Movies') : activeGenre.type === 'series' ? (appLang === 'ru-RU' ? 'Сериалы' : 'TV Shows') : ''}</span></>
                         )}
                       </h3>
                     )}
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6 gap-y-8 sm:gap-y-10">
                       {movies.map((movie, index) => (
-                        <div key={`${movie.id}-${index}`} className="movie-card relative group cursor-pointer rounded-xl overflow-hidden bg-zinc-900 shadow-lg" onClick={() => playMovie(movie)}>
+                        <div key={`${movie.id}-${index}`} className="movie-card relative group cursor-pointer rounded-xl overflow-hidden bg-zinc-900 shadow-lg ring-1 ring-zinc-800" onClick={() => playMovie(movie)}>
                           <div className="aspect-[2/3] w-full relative">
                             {movie.Poster !== 'N/A' ? (
                               <img src={movie.Poster} alt={movie.Title} className="w-full h-full object-cover" loading="lazy" />
@@ -953,8 +1015,8 @@
                             <h4 className="text-white font-bold truncate text-sm mb-1" title={movie.Title}>{movie.Title}</h4>
                             <div className="flex items-center justify-between">
                                <p className="text-zinc-400 text-xs font-medium">{movie.Year}</p>
-                               <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-sm ${movie.Type === 'series' ? 'bg-blue-900/50 text-blue-400' : 'bg-red-900/50 text-red-400'}`}>
-                                  {movie.Type === 'series' ? 'TV' : 'Movie'}
+                               <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-sm ${movie.isAnime ? 'bg-yellow-900/50 text-yellow-500' : movie.Type === 'series' ? 'bg-blue-900/50 text-blue-400' : 'bg-red-900/50 text-red-400'}`}>
+                                  {movie.isAnime ? 'Anime' : movie.Type === 'series' ? 'TV' : 'Movie'}
                                </span>
                             </div>
                           </div>
@@ -1018,7 +1080,7 @@
                                        )}
                                        <div className="absolute inset-0 flex flex-col justify-end p-3 bg-gradient-to-t from-black via-black/50 to-transparent">
                                           <h4 className="text-white font-bold truncate text-sm sm:text-base drop-shadow-md">{movie.Title}</h4>
-                                          <p className="text-zinc-300 text-xs font-medium flex items-center gap-1 mt-1"><Play className="w-3 h-3 text-red-500" fill="currentColor" /> {movie.Type === 'series' ? 'TV' : 'Movie'}</p>
+                                          <p className="text-zinc-300 text-xs font-medium flex items-center gap-1 mt-1"><Play className="w-3 h-3 text-red-500" fill="currentColor" /> {movie.isAnime ? 'Anime' : movie.Type === 'series' ? 'TV' : 'Movie'}</p>
                                        </div>
                                        <div className="poster-overlay absolute inset-0 flex flex-col items-center justify-center backdrop-blur-[2px]">
                                          <div className="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center transform scale-50 group-hover:scale-100 transition-transform duration-300 shadow-[0_0_30px_rgba(229,9,20,0.8)]">
@@ -1041,7 +1103,7 @@
                                </h3>
                                <div className="flex gap-4 sm:gap-5 overflow-x-auto pb-6 px-2 sm:px-4 snap-x snap-mandatory custom-scrollbar">
                                  {category.movies.map((movie, index) => (
-                                   <div key={`trend-${movie.id}-${index}`} className="movie-card flex-none w-36 sm:w-44 md:w-48 lg:w-56 relative group cursor-pointer rounded-xl overflow-hidden bg-zinc-900 snap-start shadow-lg" onClick={() => playMovie(movie)}>
+                                   <div key={`trend-${movie.id}-${index}`} className="movie-card flex-none w-36 sm:w-44 md:w-48 lg:w-56 relative group cursor-pointer rounded-xl overflow-hidden bg-zinc-900 snap-start shadow-lg ring-1 ring-zinc-800" onClick={() => playMovie(movie)}>
                                      <div className="aspect-[2/3] w-full relative">
                                        {movie.Poster !== 'N/A' ? (
                                          <img src={movie.Poster} alt={movie.Title} className="w-full h-full object-cover" loading="lazy" />
@@ -1067,6 +1129,9 @@
                                        <h4 className="text-white font-bold truncate text-xs sm:text-sm mb-1">{movie.Title}</h4>
                                        <div className="flex items-center justify-between">
                                           <p className="text-zinc-500 text-[10px] sm:text-xs font-medium">{movie.Year}</p>
+                                          <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-sm ${movie.isAnime ? 'bg-yellow-900/50 text-yellow-500' : movie.Type === 'series' ? 'bg-blue-900/50 text-blue-400' : 'bg-red-900/50 text-red-400'}`}>
+                                             {movie.isAnime ? 'Anime' : movie.Type === 'series' ? 'TV' : 'Movie'}
+                                          </span>
                                        </div>
                                      </div>
                                    </div>
@@ -1084,7 +1149,7 @@
                                </h3>
                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6 gap-y-8 sm:gap-y-10 px-2 sm:px-4">
                                   {homeGrid.map((movie, index) => (
-                                     <div key={`disc-${movie.id}-${index}`} className="movie-card relative group cursor-pointer rounded-xl overflow-hidden bg-zinc-900 shadow-lg" onClick={() => playMovie(movie)}>
+                                     <div key={`disc-${movie.id}-${index}`} className="movie-card relative group cursor-pointer rounded-xl overflow-hidden bg-zinc-900 shadow-lg ring-1 ring-zinc-800" onClick={() => playMovie(movie)}>
                                        <div className="aspect-[2/3] w-full relative">
                                          {movie.Poster !== 'N/A' ? (
                                            <img src={movie.Poster} alt={movie.Title} className="w-full h-full object-cover" loading="lazy" />
