@@ -269,7 +269,7 @@
         const [isBrowseOpen, setIsBrowseOpen] = useState(false);
         const [showBackToTop, setShowBackToTop] = useState(false);
 
-        // Local Storage / History States with Safety Array Parsing
+        // Local Storage / History States
         const [watchedHistory, setWatchedHistory] = useState(() => {
            try { 
              const data = JSON.parse(localStorage.getItem('alanflix_history')); 
@@ -588,7 +588,7 @@
               {/* NAVIGATION BAR - FIXED WITH BULLETPROOF INLINE SAFE-AREA PADDING */}
               <nav 
                 className="fixed top-0 w-full z-50 glass-nav px-4 sm:px-6 pb-4 flex flex-col md:flex-row justify-between items-center gap-4"
-                style={{ paddingTop: 'max(2.5rem, env(safe-area-inset-top))' }}
+                style={{ paddingTop: 'max(3.5rem, env(safe-area-inset-top))' }}
               >
                 <div className="flex items-center justify-between w-full md:w-auto">
                    <div className="flex items-center gap-2 cursor-pointer" onClick={() => goHome()}>
@@ -663,7 +663,7 @@
 
               <main 
                 className="px-4 sm:px-6 lg:px-12 max-w-[100vw] overflow-x-hidden mx-auto"
-                style={{ paddingTop: 'calc(10rem + env(safe-area-inset-top))', paddingBottom: 'max(3rem, env(safe-area-inset-bottom))' }}
+                style={{ paddingTop: 'calc(11rem + env(safe-area-inset-top))', paddingBottom: 'max(3rem, env(safe-area-inset-bottom))' }}
               >
                 
                 {/* Active Player / Details Section */}
@@ -700,13 +700,13 @@
                           </div>
                         )}
                         
-                        <div className="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-[0_0_80px_rgba(229,9,20,0.15)] ring-1 ring-zinc-800 mb-8">
+                        <div className="relative w-full bg-black rounded-2xl overflow-hidden shadow-[0_0_80px_rgba(229,9,20,0.15)] ring-1 ring-zinc-800 mb-8" style={{ paddingTop: '56.25%' }}>
                           <div className="absolute inset-0 flex items-center justify-center -z-10 bg-zinc-950">
                              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
                           </div>
                           <iframe
                             key={selectedMovie.id + (selectedEpisodeData ? selectedEpisodeData.id : '')}
-                            className="absolute inset-0 w-full h-full"
+                            className="absolute top-0 left-0 w-full h-full"
                             src={getIframeSrc()}
                             allowFullScreen
                             frameBorder="0"
