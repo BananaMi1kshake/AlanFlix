@@ -198,11 +198,28 @@
       const ShareIcon = ({ className }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>);
       const TvIcon = ({ className }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect><polyline points="17 2 12 7 7 2"></polyline></svg>);
       const ZapIcon = ({ className }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>);
+      const ServerIcon = ({ className }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>);
 
-      // TMDB Constants
+      // TMDB & Server Constants
       const TMDB_API_KEY = '81869d2e8c49e784b4958d77802dd1f3';
       const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
       const TMDB_IMG_BASE = 'https://image.tmdb.org/t/p/w500';
+
+      const STREAMING_SERVERS = [
+          { name: 'VidLink', url: 'https://vidlink.pro/movie/' },
+          { name: 'SuperEmbed', url: 'https://superembed.stream/movie/' },
+          { name: 'VidSrc ME', url: 'https://vidsrc.me/embed/movie/' },
+          { name: 'Embed SU', url: 'https://embed.su/embed/movie/' },
+          { name: 'VidSrc PRO', url: 'https://vidsrc.pro/embed/movie/' },
+      ];
+
+      // Chowder Servers for Anime Sub/Dub support
+      const ANIME_SERVERS = [
+          { name: 'Chowder (Auto)', url: 'https://vidlink.pro/movie/' },
+          { name: 'Mung Daal (Multi-Audio)', url: 'https://embed.su/embed/movie/' },
+          { name: 'Schnitzel (Subs/Dubs)', url: 'https://vidsrc.me/embed/movie/' },
+          { name: 'Panini (Backup)', url: 'https://superembed.stream/movie/' }
+      ];
 
       const EN_GENRES = { 'Action': 28, 'Comedy': 35, 'Sci-Fi': 878, 'Horror': 27, 'Romance': 10749, 'Thriller': 53, 'Drama': 18, 'Animation': 16, 'Crime': 80, 'Mystery': 9648 };
       const RU_GENRES = { 'Боевик': 28, 'Комедия': 35, 'Фантастика': 878, 'Ужасы': 27, 'Мелодрама': 10749, 'Триллер': 53, 'Драма': 18, 'Мультфильм': 16, 'Криминал': 80, 'Детектив': 9648 };
@@ -254,6 +271,7 @@
         const [isHome, setIsHome] = useState(true);
         const [browseContext, setBrowseContext] = useState('search'); 
         const [activeGenre, setActiveGenre] = useState(null); 
+        const [currentServer, setCurrentServer] = useState(0); // For Chowder Anime Servers
         
         // Data States
         const [query, setQuery] = useState("");
@@ -303,15 +321,16 @@
         const markWatched = (item) => {
            setWatchedHistory(prev => {
               const safePrev = Array.isArray(prev) ? prev : [];
-              const filtered = safePrev.filter(m => m.id !== item.id);
+              const filtered = safePrev.filter(m => m.id !== item.id || m.epId !== item.epId);
               const updated = [item, ...filtered].slice(0, 15); // Keep last 15 items
               try { localStorage.setItem('alanflix_history', JSON.stringify(updated)); } catch(e){}
               return updated;
            });
         };
 
-        const isWatched = (id) => {
+        const isWatched = (id, epId = null) => {
            const safeHistory = Array.isArray(watchedHistory) ? watchedHistory : [];
+           if (epId) return safeHistory.some(h => h.epId === epId);
            return safeHistory.some(m => m.id === id);
         }
 
@@ -442,7 +461,7 @@
 
             if (data.results && data.results.length > 0) {
               let newItems = data.results.map(m => mapTMDBItem(m, typeParam === 'anime' ? 'series' : typeParam));
-              if (typeParam === 'anime') newItems = newItems.filter(m => m.isAnime);
+              if (typeParam === 'anime') newItems = newItems.filter(m => m.isAnime || m.original_language === 'ja');
               else newItems = newItems.filter(m => !m.isAnime);
               
               setMovies(prev => isNew ? newItems : [...prev, ...newItems]);
@@ -542,7 +561,7 @@
         const lastElementRef = useInfiniteScroll(loadMoreData, hasMore, loading);
 
         const playMovie = async (movie, skipUrlUpdate = false) => {
-          setSelectedMovie(movie); setIsHome(false); setSelectedEpisodeData(null); 
+          setSelectedMovie(movie); setIsHome(false); setSelectedEpisodeData(null); setCurrentServer(0);
           
           // Only mark as watched instantly if it's a Movie (because the player auto-loads).
           // For TV Shows / Anime Series, wait until they click a specific episode!
@@ -641,11 +660,19 @@
 
         const getIframeSrc = () => {
           if (!selectedMovie) return '';
-          const baseUrl = selectedMovie.Type === 'series' ? 'https://www.vidking.net/embed/tv/' : 'https://www.vidking.net/embed/movie/';
+          const serverList = selectedMovie.isAnime ? ANIME_SERVERS : STREAMING_SERVERS;
+          const base = (serverList[currentServer] || STREAMING_SERVERS[0]).url;
+
           if (selectedMovie.Type === 'series' && selectedEpisodeData) {
-            return `${baseUrl}${selectedMovie.id}/${selectedEpisodeData.season_number}/${selectedEpisodeData.episode_number}`;
+              if (base.includes('vidlink.pro')) return `${base}${selectedMovie.id}/${selectedEpisodeData.season_number}/${selectedEpisodeData.episode_number}`;
+              if (base.includes('vidsrc.me')) return `https://vidsrc.me/embed/tv?tmdb=${selectedMovie.id}&season=${selectedEpisodeData.season_number}&episode=${selectedEpisodeData.episode_number}`;
+              if (base.includes('embed.su')) return `https://embed.su/embed/tv/${selectedMovie.id}/${selectedEpisodeData.season_number}/${selectedEpisodeData.episode_number}`;
+              if (base.includes('vidsrc.pro')) return `https://vidsrc.pro/embed/tv/${selectedMovie.id}/${selectedEpisodeData.season_number}/${selectedEpisodeData.episode_number}`;
+              return `${base.replace('movie', 'tv')}${selectedMovie.id}/${selectedEpisodeData.season_number}/${selectedEpisodeData.episode_number}`;
           }
-          return `${baseUrl}${selectedMovie.id}`;
+
+          if (base.includes('vidsrc.me')) return `https://vidsrc.me/embed/movie?tmdb=${selectedMovie.id}`;
+          return `${base}${selectedMovie.id}`;
         };
 
         const currentMovieGenres = appLang === 'ru-RU' ? Object.keys(RU_GENRES) : Object.keys(EN_GENRES);
@@ -813,6 +840,27 @@
                             </p>
                           </div>
                         )}
+
+                        {/* Chowder Server Selector - ONLY renders for Anime */}
+                        {selectedMovie.isAnime && (
+                            <div className="relative z-10 mb-4 bg-zinc-900/60 p-3 rounded-xl border border-white/5 backdrop-blur-md animate-in fade-in slide-in-from-top-4 duration-500">
+                                <div className="flex items-center gap-2 mb-2 px-1">
+                                    <ServerIcon className="w-4 h-4 text-yellow-500" />
+                                    <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">{appLang === 'ru-RU' ? 'Выбор Аниме Сервера' : 'Anime Server Engine'}</span>
+                                </div>
+                                <div className="flex overflow-x-auto no-scrollbar gap-2 pb-1">
+                                    {ANIME_SERVERS.map((server, idx) => (
+                                        <button 
+                                            key={idx}
+                                            onClick={() => setCurrentServer(idx)}
+                                            className={`px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all border ${currentServer === idx ? 'bg-yellow-500/20 text-yellow-500 border-yellow-500/50 shadow-[0_0_15px_rgba(234,179,8,0.2)]' : 'bg-zinc-800 text-zinc-400 border-transparent hover:bg-zinc-700 hover:text-white'}`}
+                                        >
+                                            {server.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                         
                         {/* Responsive Mobile Iframe Player - Minimum Height fixes squished menus! */}
                         <div className="relative w-full bg-black rounded-2xl overflow-hidden shadow-[0_0_80px_rgba(229,9,20,0.15)] ring-1 ring-zinc-800 mb-8 min-h-[400px]" style={{ paddingTop: '56.25%' }}>
@@ -902,7 +950,7 @@
 
                                 <div className="space-y-4 max-h-[700px] overflow-y-auto pr-3 custom-scrollbar">
                                    {showEpisodes.map(episode => {
-                                      const hasWatched = watchedHistory.some(h => h.epId === episode.id);
+                                      const hasWatched = isWatched(selectedMovie.id, episode.id);
                                       return (
                                       <div 
                                         key={episode.id}
@@ -1243,6 +1291,7 @@
                  <button 
                     onClick={scrollToTop} 
                     className="fixed right-6 p-4 bg-red-600 text-white rounded-full shadow-[0_0_20px_rgba(229,9,20,0.5)] hover:bg-red-700 hover:scale-110 transition-all z-50 animate-in fade-in zoom-in duration-300 safe-fab"
+                    style={{ bottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
                     title={appLang === 'ru-RU' ? 'Наверх' : 'Back to top'}
                  >
                     <ArrowUp className="w-6 h-6" />
