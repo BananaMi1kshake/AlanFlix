@@ -807,17 +807,18 @@
                           
                           {/* FIX: Added allow="autoplay; fullscreen" and vendor fullscreen prefixes for iOS Safari support */}
                           <iframe
-                            key={selectedMovie.id + (selectedEpisodeData ? selectedEpisodeData.id : '') + (selectedMovie.isAnime ? animeAudio : '')}
-                            className="absolute inset-0 w-full h-full"
-                            src={getIframeSrc()}
-                            allowFullScreen={true}
-                            webkitallowfullscreen="true"
-                            mozallowfullscreen="true"
-                            allow="autoplay; fullscreen"
-                            frameBorder="0"
-                            title="Video Player"
-                            referrerPolicy="origin"
-                          />
+                              key={selectedMovie.id + (selectedEpisodeData ? selectedEpisodeData.id : '') + (selectedMovie.isAnime ? animeAudio : '')}
+                              className="absolute inset-0 w-full h-full"
+                              src={getIframeSrc()}
+                              allowFullScreen
+                              webkitAllowFullScreen
+                              mozAllowFullScreen
+                              allow="autoplay; fullscreen; picture-in-picture"
+                              frameBorder="0"
+                              title="Video Player"
+                              referrerPolicy="origin"
+                              scrolling="no"
+                            />
                         </div>
                       </>
                     )}
