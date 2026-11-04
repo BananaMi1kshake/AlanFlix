@@ -9,10 +9,13 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="AlanFlix">
-    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjIwIiBmaWxsPSIjMDkwOTBiIi8+PHBvbHlnb24gcG9pbnRzPSI0MCwzMCA3MCw1MCA0MCw3MCIgZmlsbD0iI2U1MDkxNCIvPjwvc3ZnPg==">
     
-    <!-- Inline PWA Manifest -->
-    <link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22AlanFlix%22%2C%22short_name%22%3A%22AlanFlix%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%2309090b%22%2C%22theme_color%22%3A%22%2309090b%22%2C%22description%22%3A%22AlanFlix%20Streaming%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjIwIiBmaWxsPSIjMDkwOTBiIi8%2BPHBvbHlnb24gcG9pbnRzPSI0MCwzMCA3MCw1MCA0MCw3MCIgZmlsbD0iI2U1MDkxNCIvPjwvc3ZnPg%3D%3D%22%2C%22sizes%22%3A%22192x192%20512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
+    <!-- iOS requires a standard PNG image for the home screen icon -->
+    <link rel="apple-touch-icon" href="https://placehold.co/512x512/09090b/e50914/png?text=ALAN%5CnFLIX&font=Montserrat">
+    
+    <!-- PWA Manifest pointing to the PNG -->
+    <link rel="manifest" href='data:application/manifest+json;charset=utf-8,{"name":"AlanFlix","short_name":"AlanFlix","start_url":".","display":"standalone","background_color":"#09090b","theme_color":"#09090b","description":"AlanFlix Streaming","icons":[{"src":"https://placehold.co/512x512/09090b/e50914/png?text=ALAN%5CnFLIX&font=Montserrat","sizes":"192x192 512x512","type":"image/png"}]}'>
+    
     <title>AlanFlix</title>
 
     <!-- Preconnect Google Fonts for faster loading (fixes cursive glitch) -->
@@ -78,7 +81,7 @@
       }
 
       .intro-text {
-        font-family: 'Bebas Neue', sans-serif; /* Fallback changed from cursive */
+        font-family: 'Bebas Neue', sans-serif;
         font-size: clamp(4rem, 12vw, 10rem);
         color: transparent;
         -webkit-text-stroke: 2px #e50914;
