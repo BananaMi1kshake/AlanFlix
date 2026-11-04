@@ -198,19 +198,19 @@
       const TMDB_IMG_BASE = 'https://image.tmdb.org/t/p/w500';
 
       const STREAMING_SERVERS = [
-          { name: 'VidLink', url: 'https://vidlink.pro/movie/' },
-          { name: 'EmbedSU', url: 'https://embed.su/embed/movie/' },
-          { name: 'VidBinge', url: 'https://vidbinge.dev/embed/movie/' },
-          { name: 'MultiEmbed', url: 'https://multiembed.mov/directstream.php?video_id=' },
-          { name: 'VidSrc CC', url: 'https://vidsrc.cc/v2/embed/movie/' }
+          { name: 'VidSrc (Stable)', url: 'https://vidsrc.me/embed/movie?tmdb=' },
+          { name: 'EmbedSU (Multi-Audio)', url: 'https://embed.su/embed/movie/' },
+          { name: 'VidSrc PRO', url: 'https://vidsrc.pro/embed/movie/' },
+          { name: 'SmashyStream', url: 'https://player.smashy.stream/movie/?tmdb=' },
+          { name: 'SuperEmbed', url: 'https://multiembed.mov/directstream.php?video_id=' }
       ];
 
       // Chowder Servers for Anime Sub/Dub support
       const ANIME_SERVERS = [
-          { name: 'Chowder (Auto)', url: 'https://vidlink.pro/movie/' },
+          { name: 'Chowder (Auto)', url: 'https://vidsrc.me/embed/movie?tmdb=' },
           { name: 'Mung Daal (Multi-Audio)', url: 'https://embed.su/embed/movie/' },
-          { name: 'Schnitzel (Subs/Dubs)', url: 'https://vidsrc.cc/v2/embed/movie/' },
-          { name: 'Panini (Backup)', url: 'https://multiembed.mov/directstream.php?video_id=' }
+          { name: 'Schnitzel (Subs/Dubs)', url: 'https://vidsrc.pro/embed/movie/' },
+          { name: 'Panini (Backup)', url: 'https://player.smashy.stream/movie/?tmdb=' }
       ];
 
       const EN_GENRES = { 'Action': 28, 'Comedy': 35, 'Sci-Fi': 878, 'Horror': 27, 'Romance': 10749, 'Thriller': 53, 'Drama': 18, 'Animation': 16, 'Crime': 80, 'Mystery': 9648 };
@@ -654,23 +654,24 @@
           if (!selectedMovie) return '';
           const serverList = selectedMovie.isAnime ? ANIME_SERVERS : STREAMING_SERVERS;
           const base = (serverList[currentServer] || STREAMING_SERVERS[0]).url;
+          const id = selectedMovie.id;
 
           if (selectedMovie.Type === 'series' && selectedEpisodeData) {
               const s = selectedEpisodeData.season_number;
               const e = selectedEpisodeData.episode_number;
-              const id = selectedMovie.id;
               
-              if (base.includes('vidlink.pro')) return `https://vidlink.pro/tv/${id}/${s}/${e}`;
+              if (base.includes('vidsrc.me')) return `https://vidsrc.me/embed/tv?tmdb=${id}&season=${s}&episode=${e}`;
+              if (base.includes('vidsrc.pro')) return `https://vidsrc.pro/embed/tv/${id}/${s}/${e}`;
               if (base.includes('embed.su')) return `https://embed.su/embed/tv/${id}/${s}/${e}`;
-              if (base.includes('vidbinge.dev')) return `https://vidbinge.dev/embed/tv/${id}/${s}/${e}`;
+              if (base.includes('smashy.stream')) return `https://player.smashy.stream/tv/?tmdb=${id}&season=${s}&ep=${e}`;
               if (base.includes('multiembed.mov')) return `https://multiembed.mov/directstream.php?video_id=${id}&tmdb=1&s=${s}&e=${e}`;
-              if (base.includes('vidsrc.cc')) return `https://vidsrc.cc/v2/embed/tv/${id}/${s}/${e}`;
               
               return `${base.replace('movie', 'tv')}${id}/${s}/${e}`;
           }
 
-          if (base.includes('multiembed.mov')) return `https://multiembed.mov/directstream.php?video_id=${selectedMovie.id}&tmdb=1`;
-          return `${base}${selectedMovie.id}`;
+          if (base.includes('vidsrc.me') || base.includes('smashy.stream')) return `${base}${id}`;
+          if (base.includes('multiembed.mov')) return `https://multiembed.mov/directstream.php?video_id=${id}&tmdb=1`;
+          return `${base}${id}`;
         };
 
         const currentMovieGenres = appLang === 'ru-RU' ? Object.keys(RU_GENRES) : Object.keys(EN_GENRES);
