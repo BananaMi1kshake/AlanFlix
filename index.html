@@ -18,7 +18,7 @@
     
     <title>AlanFlix</title>
 
-    <!-- Preconnect Google Fonts for faster loading (fixes cursive glitch) -->
+    <!-- Preconnect Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
@@ -194,6 +194,8 @@
       const ShareIcon = ({ className }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>);
       const TvIcon = ({ className }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect><polyline points="17 2 12 7 7 2"></polyline></svg>);
       const ZapIcon = ({ className }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>);
+      // New Maximize Icon for App-Level Fullscreen
+      const MaximizeIcon = ({ className }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>);
 
       // TMDB Constants
       const TMDB_API_KEY = '81869d2e8c49e784b4958d77802dd1f3';
@@ -261,7 +263,9 @@
         const [selectedSeason, setSelectedSeason] = useState(1);
         const [loadingEpisodes, setLoadingEpisodes] = useState(false);
         const [selectedEpisodeData, setSelectedEpisodeData] = useState(null); 
+        
         const [animeAudio, setAnimeAudio] = useState('sub');
+        const [isAppFullscreen, setIsAppFullscreen] = useState(false); // New Fullscreen State
         
         const [isBrowseOpen, setIsBrowseOpen] = useState(false);
         const [showBackToTop, setShowBackToTop] = useState(false);
@@ -299,7 +303,7 @@
 
         const goHome = (skipUrlUpdate = false) => {
           setIsHome(true); setSelectedMovie(null); setQuery(''); setDebouncedQuery(''); setActiveGenre(null);
-          setAnimeAudio('sub');
+          setAnimeAudio('sub'); setIsAppFullscreen(false);
           if (!skipUrlUpdate) updateURL({});
         };
 
@@ -504,7 +508,7 @@
         const lastElementRef = useInfiniteScroll(loadMoreData, hasMore, loading);
 
         const playMovie = async (movie, skipUrlUpdate = false) => {
-          setSelectedMovie(movie); setIsHome(false); setSelectedEpisodeData(null); setAnimeAudio('sub');
+          setSelectedMovie(movie); setIsHome(false); setSelectedEpisodeData(null); setAnimeAudio('sub'); setIsAppFullscreen(false);
           
           if (movie.Type !== 'series') {
              markWatched(movie);
@@ -567,11 +571,12 @@
            setSelectedEpisodeData(episode);
            markWatched({ ...selectedMovie, Title: `${selectedMovie.Title} (S${episode.season_number} E${episode.episode_number})`, epId: episode.id });
            window.scrollTo({ top: 0, behavior: 'smooth' });
+           setIsAppFullscreen(false);
         };
 
         const closePlayer = () => {
           setSelectedMovie(null); setSelectedEpisodeData(null); setMovieDetails(null); setRecommendations([]);
-          setAnimeAudio('sub');
+          setAnimeAudio('sub'); setIsAppFullscreen(false);
           if (browseContext === 'search' && debouncedQuery) {
              updateURL({ q: debouncedQuery, type: searchType });
           } else if (browseContext === 'genre' && activeGenre) {
@@ -640,7 +645,6 @@
               
               {isBrowseOpen && <div className="fixed inset-0 z-40" onClick={() => setIsBrowseOpen(false)}></div>}
 
-              {/* Added safe area insets to nav to prevent notch hiding UI in horizontal mode */}
               <nav 
                 className="fixed top-0 w-full z-50 glass-nav px-4 sm:px-6 pb-4 flex flex-col md:flex-row justify-between items-center gap-4"
                 style={{ 
@@ -723,7 +727,6 @@
                 </div>
               </nav>
 
-              {/* Added safe area insets to main to prevent notch hiding UI in horizontal mode */}
               <main 
                 className="max-w-[100vw] overflow-x-hidden mx-auto relative"
                 style={{ 
@@ -769,38 +772,56 @@
 
                     {(selectedMovie.Type !== 'series' || selectedEpisodeData) && (
                       <>
-                        <div className="bg-zinc-900/80 border border-zinc-700 rounded-xl p-3 sm:p-4 mb-4 shadow-xl flex items-start sm:items-center gap-3 backdrop-blur-md animate-in fade-in zoom-in duration-500">
-                           <AlertCircle className="w-6 h-6 text-zinc-400 shrink-0 mt-0.5 sm:mt-0" />
-                           <p className="text-zinc-300 text-sm sm:text-base leading-relaxed">
-                             <strong className="text-white tracking-wide">STREAM LOADING:</strong> The provider server may take up to 10-20 seconds to generate the video stream initially. Please be patient if you see a loading screen!
-                           </p>
-                        </div>
+                        <div className="flex flex-wrap items-center gap-3 mb-4">
+                           {/* Custom App-Level Fullscreen Button */}
+                           <button 
+                             onClick={() => setIsAppFullscreen(true)} 
+                             className="flex items-center gap-2 bg-zinc-900/60 py-2 px-4 rounded-xl border border-white/5 backdrop-blur-md text-white font-bold text-sm hover:bg-zinc-800 transition-colors shadow-lg ring-1 ring-white/10"
+                           >
+                              <MaximizeIcon className="w-4 h-4" /> Theater Mode (Fullscreen)
+                           </button>
 
-                        {selectedMovie.isAnime && (
-                           <div className="relative z-10 mb-4 flex items-center gap-2 bg-zinc-900/60 p-2 rounded-xl border border-white/5 backdrop-blur-md animate-in fade-in slide-in-from-top-4 duration-500 w-fit">
-                              <div className="px-3 flex items-center gap-2">
-                                 <ZapIcon className="w-4 h-4 text-yellow-500" />
-                                 <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Audio</span>
+                           {/* Audio Sub/Dub toggle for Anime */}
+                           {selectedMovie.isAnime && (
+                              <div className="flex items-center gap-2 bg-zinc-900/60 p-1.5 rounded-xl border border-white/5 backdrop-blur-md">
+                                 <div className="px-2 flex items-center gap-1.5">
+                                    <ZapIcon className="w-4 h-4 text-yellow-500" />
+                                    <span className="text-[10px] font-black text-zinc-400 uppercase tracking-wider">Audio</span>
+                                 </div>
+                                 <div className="flex bg-zinc-950 rounded-lg p-1">
+                                    <button 
+                                      onClick={() => setAnimeAudio('sub')}
+                                      className={`px-4 py-1 rounded-md text-sm font-bold transition-all ${animeAudio === 'sub' ? 'bg-yellow-500 text-black shadow-sm' : 'text-zinc-500 hover:text-white'}`}
+                                    >
+                                      SUB
+                                    </button>
+                                    <button 
+                                      onClick={() => setAnimeAudio('dub')}
+                                      className={`px-4 py-1 rounded-md text-sm font-bold transition-all ${animeAudio === 'dub' ? 'bg-yellow-500 text-black shadow-sm' : 'text-zinc-500 hover:text-white'}`}
+                                    >
+                                      DUB
+                                    </button>
+                                 </div>
                               </div>
-                              <div className="flex bg-zinc-950 rounded-lg p-1">
-                                 <button 
-                                   onClick={() => setAnimeAudio('sub')}
-                                   className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${animeAudio === 'sub' ? 'bg-yellow-500 text-black shadow-sm' : 'text-zinc-500 hover:text-white'}`}
-                                 >
-                                   SUB
-                                 </button>
-                                 <button 
-                                   onClick={() => setAnimeAudio('dub')}
-                                   className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${animeAudio === 'dub' ? 'bg-yellow-500 text-black shadow-sm' : 'text-zinc-500 hover:text-white'}`}
-                                 >
-                                   DUB
-                                 </button>
-                              </div>
-                           </div>
-                        )}
+                           )}
+                        </div>
                         
-                        {/* FIX: Bypassing React's DOM attribute stripping to force iOS PWA fullscreen support */}
-                        <div className="relative w-full max-w-5xl mx-auto aspect-video bg-black rounded-2xl overflow-hidden shadow-[0_0_80px_rgba(229,9,20,0.15)] ring-1 ring-zinc-800 mb-8">
+                        {/* FIX: CSS App-Level Fullscreen Container */}
+                        <div className={isAppFullscreen 
+                           ? "fixed inset-0 z-[99999] w-[100dvw] h-[100dvh] bg-black flex flex-col justify-center" 
+                           : "relative w-full max-w-5xl mx-auto aspect-video bg-black rounded-2xl overflow-hidden shadow-[0_0_80px_rgba(229,9,20,0.15)] ring-1 ring-zinc-800 mb-8"
+                        }>
+                          
+                          {/* Floating Close button when in Custom Fullscreen */}
+                          {isAppFullscreen && (
+                             <button 
+                               onClick={() => setIsAppFullscreen(false)} 
+                               className="absolute top-6 right-6 sm:top-8 sm:right-8 z-50 bg-black/60 p-3 rounded-full text-white backdrop-blur border border-white/20 hover:bg-red-600 transition-colors shadow-2xl"
+                             >
+                                <X className="w-6 h-6" />
+                             </button>
+                          )}
+
                           <div className="absolute inset-0 flex items-center justify-center -z-10 bg-zinc-950">
                              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
                           </div>
