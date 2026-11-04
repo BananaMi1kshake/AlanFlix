@@ -640,9 +640,14 @@
               
               {isBrowseOpen && <div className="fixed inset-0 z-40" onClick={() => setIsBrowseOpen(false)}></div>}
 
+              {/* Added safe area insets to nav to prevent notch hiding UI in horizontal mode */}
               <nav 
                 className="fixed top-0 w-full z-50 glass-nav px-4 sm:px-6 pb-4 flex flex-col md:flex-row justify-between items-center gap-4"
-                style={{ paddingTop: 'max(3.5rem, env(safe-area-inset-top))' }}
+                style={{ 
+                   paddingTop: 'max(1rem, env(safe-area-inset-top))',
+                   paddingLeft: 'max(1rem, env(safe-area-inset-left))',
+                   paddingRight: 'max(1rem, env(safe-area-inset-right))'
+                }}
               >
                 <div className="flex items-center justify-between w-full md:w-auto">
                    <div className="flex items-center gap-2 cursor-pointer" onClick={() => goHome()}>
@@ -718,9 +723,15 @@
                 </div>
               </nav>
 
+              {/* Added safe area insets to main to prevent notch hiding UI in horizontal mode */}
               <main 
-                className="px-4 sm:px-6 lg:px-12 max-w-[100vw] overflow-x-hidden mx-auto relative"
-                style={{ paddingTop: 'calc(10rem + env(safe-area-inset-top))', paddingBottom: 'max(3rem, env(safe-area-inset-bottom))' }}
+                className="max-w-[100vw] overflow-x-hidden mx-auto relative"
+                style={{ 
+                  paddingTop: 'calc(10rem + env(safe-area-inset-top))', 
+                  paddingBottom: 'max(3rem, env(safe-area-inset-bottom))',
+                  paddingLeft: 'max(1rem, env(safe-area-inset-left))',
+                  paddingRight: 'max(1rem, env(safe-area-inset-right))'
+                }}
               >
                 
                 {selectedMovie && (
@@ -787,16 +798,22 @@
                               </div>
                            </div>
                         )}
-
-                        <div className="relative w-full bg-black rounded-2xl overflow-hidden shadow-[0_0_80px_rgba(229,9,20,0.15)] ring-1 ring-zinc-800 mb-8 min-h-[400px]" style={{ paddingTop: '56.25%' }}>
+                        
+                        {/* FIX: Replaced explicit min-h-[400px] and paddingTop hack with `aspect-video w-full max-w-5xl mx-auto` to fix layout overflowing in landscape mode */}
+                        <div className="relative w-full max-w-5xl mx-auto aspect-video bg-black rounded-2xl overflow-hidden shadow-[0_0_80px_rgba(229,9,20,0.15)] ring-1 ring-zinc-800 mb-8">
                           <div className="absolute inset-0 flex items-center justify-center -z-10 bg-zinc-950">
                              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
                           </div>
+                          
+                          {/* FIX: Added allow="autoplay; fullscreen" and vendor fullscreen prefixes for iOS Safari support */}
                           <iframe
                             key={selectedMovie.id + (selectedEpisodeData ? selectedEpisodeData.id : '') + (selectedMovie.isAnime ? animeAudio : '')}
                             className="absolute inset-0 w-full h-full"
                             src={getIframeSrc()}
-                            allowFullScreen
+                            allowFullScreen={true}
+                            webkitallowfullscreen="true"
+                            mozallowfullscreen="true"
+                            allow="autoplay; fullscreen"
                             frameBorder="0"
                             title="Video Player"
                             referrerPolicy="origin"
