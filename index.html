@@ -14,6 +14,11 @@
     <!-- Inline PWA Manifest -->
     <link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22AlanFlix%22%2C%22short_name%22%3A%22AlanFlix%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%2309090b%22%2C%22theme_color%22%3A%22%2309090b%22%2C%22description%22%3A%22AlanFlix%20Streaming%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjIwIiBmaWxsPSIjMDkwOTBiIi8%2BPHBvbHlnb24gcG9pbnRzPSI0MCwzMCA3MCw1MCA0MCw3MCIgZmlsbD0iI2U1MDkxNCIvPjwvc3ZnPg%3D%3D%22%2C%22sizes%22%3A%22192x192%20512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
     <title>AlanFlix</title>
+
+    <!-- Preconnect Google Fonts for faster loading (fixes cursive glitch) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -26,8 +31,6 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;800&display=swap');
-
       body {
         background-color: #09090b;
         color: white;
@@ -42,7 +45,6 @@
         user-select: none;
       }
 
-      /* Allow selection only for text content */
       input, p, h1, h2, h3, h4, span, strong { user-select: auto; }
 
       /* --- Intro Animation Styles --- */
@@ -76,7 +78,7 @@
       }
 
       .intro-text {
-        font-family: 'Bebas Neue', cursive;
+        font-family: 'Bebas Neue', sans-serif; /* Fallback changed from cursive */
         font-size: clamp(4rem, 12vw, 10rem);
         color: transparent;
         -webkit-text-stroke: 2px #e50914;
@@ -199,7 +201,6 @@
       const EN_TV_GENRES = { 'Action & Adventure': 10759, 'Comedy': 35, 'Sci-Fi & Fantasy': 10765, 'Drama': 18, 'Animation': 16, 'Crime': 80, 'Mystery': 9648 };
       const EN_ANIME_GENRES = { 'Action': 10759, 'Comedy': 35, 'Sci-Fi & Fantasy': 10765, 'Drama': 18, 'Mystery': 9648 };
 
-      // Helper to map TMDB item to universal app format
       const mapTMDBItem = (item, defaultType = 'movie') => {
           const isAnime = item.original_language === 'ja' && (
               (item.genre_ids && item.genre_ids.includes(16)) || 
@@ -217,7 +218,6 @@
           };
       };
 
-      // Custom Hook for Infinite Scrolling
       function useInfiniteScroll(callback, hasMore, loading) {
         const observer = useRef();
         const lastElementRef = useCallback(node => {
@@ -232,13 +232,11 @@
       }
 
       function App() {
-        // Global App States
         const [introFinished, setIntroFinished] = useState(false);
         const [isHome, setIsHome] = useState(true);
         const [browseContext, setBrowseContext] = useState('search'); 
         const [activeGenre, setActiveGenre] = useState(null); 
         
-        // Data States
         const [query, setQuery] = useState("");
         const [debouncedQuery, setDebouncedQuery] = useState("");
         const [searchType, setSearchType] = useState('movie'); 
@@ -246,14 +244,12 @@
         const [homeData, setHomeData] = useState([]);
         const [homeGrid, setHomeGrid] = useState([]); 
         
-        // Pagination & Loading States
         const [page, setPage] = useState(1);
         const [hasMore, setHasMore] = useState(false);
         const [loading, setLoading] = useState(true);
         const [loadingHome, setLoadingHome] = useState(true);
         const [error, setError] = useState(null);
 
-        // Player & Details States
         const [selectedMovie, setSelectedMovie] = useState(null);
         const [movieDetails, setMovieDetails] = useState(null);
         const [recommendations, setRecommendations] = useState([]);
@@ -262,13 +258,12 @@
         const [selectedSeason, setSelectedSeason] = useState(1);
         const [loadingEpisodes, setLoadingEpisodes] = useState(false);
         const [selectedEpisodeData, setSelectedEpisodeData] = useState(null); 
+        const [animeAudio, setAnimeAudio] = useState('sub');
         
-        // UI Interaction States
         const [isBrowseOpen, setIsBrowseOpen] = useState(false);
         const [showBackToTop, setShowBackToTop] = useState(false);
         const [shareText, setShareText] = useState('Share');
 
-        // Local Storage / History States with Safety Array Parsing
         const [watchedHistory, setWatchedHistory] = useState(() => {
            try { 
              const data = JSON.parse(localStorage.getItem('alanflix_history')); 
@@ -280,7 +275,7 @@
            setWatchedHistory(prev => {
               const safePrev = Array.isArray(prev) ? prev : [];
               const filtered = safePrev.filter(m => m.id !== item.id || m.epId !== item.epId);
-              const updated = [item, ...filtered].slice(0, 15); // Keep last 15 items
+              const updated = [item, ...filtered].slice(0, 15);
               try { localStorage.setItem('alanflix_history', JSON.stringify(updated)); } catch(e){}
               return updated;
            });
@@ -292,7 +287,6 @@
            return safeHistory.some(m => m.id === id);
         }
 
-        // URL Routing Helpers
         const updateURL = (params) => {
           const url = new URL(window.location);
           url.search = '';
@@ -302,10 +296,10 @@
 
         const goHome = (skipUrlUpdate = false) => {
           setIsHome(true); setSelectedMovie(null); setQuery(''); setDebouncedQuery(''); setActiveGenre(null);
+          setAnimeAudio('sub');
           if (!skipUrlUpdate) updateURL({});
         };
 
-        // Browser Back/Forward & Deep Link Parsing
         useEffect(() => {
           const handleUrlChange = async () => {
             const params = new URLSearchParams(window.location.search);
@@ -333,17 +327,15 @@
           };
 
           window.addEventListener('popstate', handleUrlChange);
-          if (introFinished) handleUrlChange(); // Run once after intro
+          if (introFinished) handleUrlChange();
           return () => window.removeEventListener('popstate', handleUrlChange);
         }, [introFinished]);
 
-        // Debounce Query Input (500ms)
         useEffect(() => {
           const timer = setTimeout(() => setDebouncedQuery(query), 500);
           return () => clearTimeout(timer);
         }, [query]);
 
-        // Auto-Search on Debounce
         useEffect(() => {
           const currentQ = new URLSearchParams(window.location.search).get('q') || '';
           if (debouncedQuery.trim() && (debouncedQuery !== currentQ || browseContext !== 'search' || selectedMovie)) {
@@ -355,7 +347,6 @@
           }
         }, [debouncedQuery, searchType]);
 
-        // Scroll listener for Back-to-Top
         useEffect(() => {
            const handleScroll = () => setShowBackToTop(window.scrollY > 500);
            window.addEventListener('scroll', handleScroll);
@@ -364,13 +355,11 @@
 
         const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
-        // Run intro animation sequence
         useEffect(() => {
           const timer = setTimeout(() => setIntroFinished(true), 4000); 
           return () => clearTimeout(timer);
         }, []);
 
-        // Initial Home Page Data
         useEffect(() => {
           if (introFinished && isHome && !selectedMovie) {
              fetchHomeData();
@@ -460,14 +449,13 @@
                  else newItems = newItems.filter(m => !m.isAnime);
               }
 
-              // --- CORY IN THE HOUSE ANIME MEME OVERRIDE ---
               if (pageNum === 1 && typeParam === 'anime' && (genreName === 'Action' || genreName === 'All Anime')) {
                  if (!newItems.some(m => m.id === 119)) {
                      newItems.unshift({
                         id: 119, 
                         Title: 'Cory in the House',
                         Year: '2007',
-                        Poster: 'https://wsrv.nl/?url=upload.wikimedia.org/wikipedia/en/e/e0/Cory_in_the_House_title_card.jpg',
+                        Poster: 'https://m.media-amazon.com/images/M/MV5BMTM2ODUzMDU1MV5BMl5BanBnXkFtZTcwNjY4NzY1MQ@@._V1_FMjpg_UX1000_.jpg',
                         Type: 'series',
                         imdbRating: '10.0', 
                         Overview: 'Cory Baxter moves to the White House, instantly initiating the greatest anime arc in history.',
@@ -488,7 +476,6 @@
            } finally { setLoading(false); }
         };
 
-        // Actions
         const selectGenre = (type, genre, skipUrlUpdate = false) => {
            setIsBrowseOpen(false); setIsHome(false); setBrowseContext('genre');
            setActiveGenre({ type, genre }); setSearchType(type);
@@ -497,7 +484,6 @@
            loadGenreData(1, type, genre, true);
         };
 
-        // Infinite Scroll Callbacks
         const loadMoreData = useCallback(() => {
            if (loading || !hasMore) return;
            const nextPage = page + 1;
@@ -515,7 +501,7 @@
         const lastElementRef = useInfiniteScroll(loadMoreData, hasMore, loading);
 
         const playMovie = async (movie, skipUrlUpdate = false) => {
-          setSelectedMovie(movie); setIsHome(false); setSelectedEpisodeData(null);
+          setSelectedMovie(movie); setIsHome(false); setSelectedEpisodeData(null); setAnimeAudio('sub');
           
           if (movie.Type !== 'series') {
              markWatched(movie);
@@ -582,6 +568,7 @@
 
         const closePlayer = () => {
           setSelectedMovie(null); setSelectedEpisodeData(null); setMovieDetails(null); setRecommendations([]);
+          setAnimeAudio('sub');
           if (browseContext === 'search' && debouncedQuery) {
              updateURL({ q: debouncedQuery, type: searchType });
           } else if (browseContext === 'genre' && activeGenre) {
@@ -613,14 +600,21 @@
         const getIframeSrc = () => {
           if (!selectedMovie) return '';
           const id = selectedMovie.id;
+          let url = '';
 
           if (selectedMovie.Type === 'series' && selectedEpisodeData) {
               const s = selectedEpisodeData.season_number;
               const e = selectedEpisodeData.episode_number;
-              return `https://vidly.pro/embed/tv/${id}/${s}/${e}`;
+              url = `https://vidly.pro/embed/tv/${id}/${s}/${e}`;
+          } else {
+              url = `https://vidly.pro/embed/movie/${id}`;
           }
 
-          return `https://vidly.pro/embed/movie/${id}`;
+          if (selectedMovie.isAnime) {
+              url += `?type=${animeAudio}`;
+          }
+
+          return url;
         };
 
         const currentMovieGenres = Object.keys(EN_GENRES);
@@ -629,7 +623,6 @@
 
         return (
           <React.Fragment>
-            {/* INTRO ANIMATION */}
             {!introFinished && (
               <div className="intro-overlay">
                 <div className="intro-light-beam"></div>
@@ -640,13 +633,10 @@
               </div>
             )}
 
-            {/* MAIN APPLICATION */}
             <div className={`min-h-screen bg-zinc-950 transition-opacity duration-1000 ${introFinished ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'}`}>
               
-              {/* Invisible Overlay to close Dropdown when clicking outside */}
               {isBrowseOpen && <div className="fixed inset-0 z-40" onClick={() => setIsBrowseOpen(false)}></div>}
 
-              {/* NAVIGATION BAR - FIXED WITH BULLETPROOF INLINE SAFE-AREA PADDING */}
               <nav 
                 className="fixed top-0 w-full z-50 glass-nav px-4 sm:px-6 pb-4 flex flex-col md:flex-row justify-between items-center gap-4"
                 style={{ paddingTop: 'max(3.5rem, env(safe-area-inset-top))' }}
@@ -657,7 +647,6 @@
                      <span className="font-['Bebas_Neue'] text-2xl sm:text-3xl tracking-wide text-red-600 drop-shadow-[0_0_10px_rgba(229,9,20,0.5)]">ALANFLIX</span>
                    </div>
                    
-                   {/* Mobile Controls Right Side */}
                    <div className="flex items-center gap-2 md:hidden">
                       <button onClick={() => setIsBrowseOpen(!isBrowseOpen)} className="flex items-center gap-1 text-white text-xs font-bold bg-red-600 px-3 py-1.5 rounded-lg shadow-lg relative z-50">
                          Browse <ChevronDown className="w-3 h-3" />
@@ -666,8 +655,6 @@
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full md:w-auto relative z-50">
-                  
-                  {/* Desktop Controls */}
                   <div className="hidden md:flex items-center gap-3">
                      <div className="relative group">
                         <button onClick={() => setIsBrowseOpen(!isBrowseOpen)} className="flex items-center gap-2 text-white font-semibold bg-zinc-900/90 px-5 py-2.5 border border-zinc-800 rounded-full hover:bg-zinc-800 hover:border-zinc-600 transition-all shadow-lg">
@@ -676,7 +663,6 @@
                      </div>
                   </div>
 
-                  {/* Shared Dropdown Modal */}
                   <div className={`absolute top-full left-0 md:left-auto right-0 md:right-[350px] mt-2 w-full md:w-[500px] bg-zinc-900 border border-zinc-800 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.9)] transition-all duration-200 flex flex-col overflow-hidden backdrop-blur-xl ${isBrowseOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'}`}>
                      <div className="grid grid-cols-2 md:grid-cols-3">
                         <div className="border-r border-b md:border-b-0 border-zinc-800 p-2 bg-black/20">
@@ -701,7 +687,6 @@
                      </div>
                   </div>
 
-                  {/* Search Bar & Type Toggle */}
                   <div className="flex w-full md:w-[400px] bg-zinc-900/80 border border-zinc-800 rounded-full shadow-inner overflow-hidden">
                      <button 
                         onClick={() => setSearchType(prev => prev === 'movie' ? 'series' : prev === 'series' ? 'anime' : 'movie')} 
@@ -735,11 +720,9 @@
                 style={{ paddingTop: 'calc(10rem + env(safe-area-inset-top))', paddingBottom: 'max(3rem, env(safe-area-inset-bottom))' }}
               >
                 
-                {/* Active Player / Details Section */}
                 {selectedMovie && (
                   <div className="w-full max-w-7xl mx-auto mb-16 animate-in fade-in slide-in-from-bottom-8 duration-700 relative z-10">
                     
-                    {/* Cinematic Ambient Glow */}
                     {selectedMovie.Poster !== 'N/A' && (
                        <div className="absolute inset-0 -z-20 scale-110 blur-3xl opacity-30 pointer-events-none">
                           <img src={selectedMovie.Poster} className="w-full h-full object-cover" alt="glow" />
@@ -772,13 +755,42 @@
 
                     {(selectedMovie.Type !== 'series' || selectedEpisodeData) && (
                       <>
-                        {/* Responsive Mobile Iframe Player */}
+                        <div className="bg-zinc-900/80 border border-zinc-700 rounded-xl p-3 sm:p-4 mb-4 shadow-xl flex items-start sm:items-center gap-3 backdrop-blur-md animate-in fade-in zoom-in duration-500">
+                           <AlertCircle className="w-6 h-6 text-zinc-400 shrink-0 mt-0.5 sm:mt-0" />
+                           <p className="text-zinc-300 text-sm sm:text-base leading-relaxed">
+                             <strong className="text-white tracking-wide">STREAM LOADING:</strong> The provider server may take up to 10-20 seconds to generate the video stream initially. Please be patient if you see a loading screen!
+                           </p>
+                        </div>
+
+                        {selectedMovie.isAnime && (
+                           <div className="relative z-10 mb-4 flex items-center gap-2 bg-zinc-900/60 p-2 rounded-xl border border-white/5 backdrop-blur-md animate-in fade-in slide-in-from-top-4 duration-500 w-fit">
+                              <div className="px-3 flex items-center gap-2">
+                                 <ZapIcon className="w-4 h-4 text-yellow-500" />
+                                 <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Audio</span>
+                              </div>
+                              <div className="flex bg-zinc-950 rounded-lg p-1">
+                                 <button 
+                                   onClick={() => setAnimeAudio('sub')}
+                                   className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${animeAudio === 'sub' ? 'bg-yellow-500 text-black shadow-sm' : 'text-zinc-500 hover:text-white'}`}
+                                 >
+                                   SUB
+                                 </button>
+                                 <button 
+                                   onClick={() => setAnimeAudio('dub')}
+                                   className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${animeAudio === 'dub' ? 'bg-yellow-500 text-black shadow-sm' : 'text-zinc-500 hover:text-white'}`}
+                                 >
+                                   DUB
+                                 </button>
+                              </div>
+                           </div>
+                        )}
+
                         <div className="relative w-full bg-black rounded-2xl overflow-hidden shadow-[0_0_80px_rgba(229,9,20,0.15)] ring-1 ring-zinc-800 mb-8 min-h-[400px]" style={{ paddingTop: '56.25%' }}>
                           <div className="absolute inset-0 flex items-center justify-center -z-10 bg-zinc-950">
                              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
                           </div>
                           <iframe
-                            key={selectedMovie.id + (selectedEpisodeData ? selectedEpisodeData.id : '')}
+                            key={selectedMovie.id + (selectedEpisodeData ? selectedEpisodeData.id : '') + (selectedMovie.isAnime ? animeAudio : '')}
                             className="absolute inset-0 w-full h-full"
                             src={getIframeSrc()}
                             allowFullScreen
@@ -790,7 +802,6 @@
                       </>
                     )}
 
-                    {/* MOVIE DETAILS (Plot & Cast) */}
                     {movieDetails && (
                        <div className="bg-zinc-900/80 rounded-3xl p-6 sm:p-8 border border-zinc-800/80 backdrop-blur-xl shadow-xl mb-10">
                           <div className="flex flex-col lg:flex-row gap-8">
@@ -830,7 +841,6 @@
                        </div>
                     )}
 
-                    {/* TV Show Episode Browser */}
                     {selectedMovie.Type === 'series' && (
                        <div className="bg-zinc-900/80 rounded-3xl p-6 sm:p-8 border border-zinc-800/80 backdrop-blur-xl shadow-2xl mb-10">
                           {loadingEpisodes ? (
@@ -913,7 +923,6 @@
                        </div>
                     )}
 
-                    {/* Recommendations Row */}
                     {recommendations.length > 0 && (
                        <div className="w-full mt-12 animate-in fade-in duration-1000">
                            <h3 className="text-xl sm:text-2xl font-black text-white mb-6 flex items-center gap-3 pl-4 border-l-4 border-red-600">
@@ -967,7 +976,6 @@
                   </div>
                 )}
 
-                {/* ENDLESS SCROLL RESULTS SECTION (Search OR Genre Browsing) */}
                 {!isHome && !selectedMovie && (
                   <div className="max-w-7xl mx-auto">
                     {!loading && movies.length > 0 && (
@@ -1033,7 +1041,6 @@
                   </div>
                 )}
 
-                {/* INITIAL LOADING & ERROR STATES */}
                 {loading && movies.length === 0 && !isHome && !selectedMovie && (
                   <div className="flex flex-col items-center justify-center py-32">
                     <div className="relative w-20 h-20">
@@ -1052,7 +1059,6 @@
                   </div>
                 )}
 
-                {/* NETFLIX-STYLE HOME PAGE WITH INFINITE GRID */}
                 {isHome && !selectedMovie && (
                   <div className="pb-12 max-w-screen-2xl mx-auto">
                     {loadingHome ? (
@@ -1063,7 +1069,6 @@
                     ) : (
                        <div className="space-y-10 sm:space-y-14 mt-4 sm:mt-8">
                          
-                         {/* Continue Watching Row (Local Storage) */}
                          {watchedHistory.length > 0 && (
                             <div className="w-full mb-4">
                                <h3 className="text-xl sm:text-2xl font-black text-white mb-4 sm:mb-6 flex items-center gap-3 pl-2 sm:pl-4 border-l-4 border-red-600">
@@ -1094,7 +1099,6 @@
                              </div>
                          )}
 
-                         {/* Trending Carousels */}
                          {homeData.map((category, idx) => (
                            category.movies?.length > 0 && (
                              <div key={idx} className="w-full">
@@ -1141,7 +1145,6 @@
                            )
                          ))}
 
-                         {/* Infinite Discover Grid for Home Page */}
                          {homeGrid.length > 0 && (
                             <div className="w-full pt-8 border-t border-zinc-900">
                                <h3 className="text-xl sm:text-2xl font-black text-white mb-6 flex items-center gap-3 pl-2 sm:pl-4 border-l-4 border-red-600">
@@ -1196,7 +1199,6 @@
                 )}
               </main>
 
-              {/* Floating Back To Top Button */}
               {showBackToTop && (
                  <button 
                     onClick={scrollToTop} 
