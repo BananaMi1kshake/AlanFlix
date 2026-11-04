@@ -83,7 +83,6 @@
         text-transform: uppercase;
         position: relative;
         z-index: 10;
-        /* HARDWARE ACCELERATION FIXES */
         will-change: transform, opacity, filter;
         transform: translateZ(0);
         -webkit-backface-visibility: hidden;
@@ -190,37 +189,15 @@
       const ShareIcon = ({ className }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>);
       const TvIcon = ({ className }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect><polyline points="17 2 12 7 7 2"></polyline></svg>);
       const ZapIcon = ({ className }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>);
-      const ServerIcon = ({ className }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>);
 
-      // TMDB & Server Constants
+      // TMDB Constants
       const TMDB_API_KEY = '81869d2e8c49e784b4958d77802dd1f3';
       const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
       const TMDB_IMG_BASE = 'https://image.tmdb.org/t/p/w500';
 
-      const STREAMING_SERVERS = [
-          { name: 'VidSrc (Stable)', url: 'https://vidsrc.me/embed/movie?tmdb=' },
-          { name: 'EmbedSU (Multi-Audio)', url: 'https://embed.su/embed/movie/' },
-          { name: 'VidSrc PRO', url: 'https://vidsrc.pro/embed/movie/' },
-          { name: 'SmashyStream', url: 'https://player.smashy.stream/movie/?tmdb=' },
-          { name: 'SuperEmbed', url: 'https://multiembed.mov/directstream.php?video_id=' }
-      ];
-
-      // Chowder Servers for Anime Sub/Dub support
-      const ANIME_SERVERS = [
-          { name: 'Chowder (Auto)', url: 'https://vidsrc.me/embed/movie?tmdb=' },
-          { name: 'Mung Daal (Multi-Audio)', url: 'https://embed.su/embed/movie/' },
-          { name: 'Schnitzel (Subs/Dubs)', url: 'https://vidsrc.pro/embed/movie/' },
-          { name: 'Panini (Backup)', url: 'https://player.smashy.stream/movie/?tmdb=' }
-      ];
-
       const EN_GENRES = { 'Action': 28, 'Comedy': 35, 'Sci-Fi': 878, 'Horror': 27, 'Romance': 10749, 'Thriller': 53, 'Drama': 18, 'Animation': 16, 'Crime': 80, 'Mystery': 9648 };
-      const RU_GENRES = { 'Боевик': 28, 'Комедия': 35, 'Фантастика': 878, 'Ужасы': 27, 'Мелодрама': 10749, 'Триллер': 53, 'Драма': 18, 'Мультфильм': 16, 'Криминал': 80, 'Детектив': 9648 };
-
       const EN_TV_GENRES = { 'Action & Adventure': 10759, 'Comedy': 35, 'Sci-Fi & Fantasy': 10765, 'Drama': 18, 'Animation': 16, 'Crime': 80, 'Mystery': 9648 };
-      const RU_TV_GENRES = { 'Боевик и Приключения': 10759, 'Комедия': 35, 'Фантастика': 10765, 'Драма': 18, 'Мультфильм': 16, 'Криминал': 80, 'Детектив': 9648 };
-
       const EN_ANIME_GENRES = { 'Action': 10759, 'Comedy': 35, 'Sci-Fi & Fantasy': 10765, 'Drama': 18, 'Mystery': 9648 };
-      const RU_ANIME_GENRES = { 'Экшен': 10759, 'Комедия': 35, 'Фэнтези': 10765, 'Драма': 18, 'Детектив': 9648 };
 
       // Helper to map TMDB item to universal app format
       const mapTMDBItem = (item, defaultType = 'movie') => {
@@ -256,14 +233,10 @@
 
       function App() {
         // Global App States
-        const [appLang, setAppLang] = useState(() => {
-          try { return localStorage.getItem('alanflix_lang') || 'en-US'; } catch { return 'en-US'; }
-        });
         const [introFinished, setIntroFinished] = useState(false);
         const [isHome, setIsHome] = useState(true);
         const [browseContext, setBrowseContext] = useState('search'); 
         const [activeGenre, setActiveGenre] = useState(null); 
-        const [currentServer, setCurrentServer] = useState(0); // For Chowder Anime Servers
         
         // Data States
         const [query, setQuery] = useState("");
@@ -293,7 +266,7 @@
         // UI Interaction States
         const [isBrowseOpen, setIsBrowseOpen] = useState(false);
         const [showBackToTop, setShowBackToTop] = useState(false);
-        const [shareText, setShareText] = useState(appLang === 'ru-RU' ? 'Поделиться' : 'Share');
+        const [shareText, setShareText] = useState('Share');
 
         // Local Storage / History States with Safety Array Parsing
         const [watchedHistory, setWatchedHistory] = useState(() => {
@@ -302,13 +275,6 @@
              return Array.isArray(data) ? data : [];
            } catch { return []; }
         });
-
-        // Toggle Language Persistence
-        const toggleLanguage = () => {
-           const newLang = appLang === 'en-US' ? 'ru-RU' : 'en-US';
-           setAppLang(newLang);
-           try { localStorage.setItem('alanflix_lang', newLang); } catch(e){}
-        };
 
         const markWatched = (item) => {
            setWatchedHistory(prev => {
@@ -352,8 +318,7 @@
 
             if (v) {
               try {
-                // If it's anime, the Type might be series, but mapTMDBItem handles it
-                const res = await fetch(`${TMDB_BASE_URL}/${type === 'series' || type === 'anime' ? 'tv' : 'movie'}/${v}?api_key=${TMDB_API_KEY}&language=${appLang}`);
+                const res = await fetch(`${TMDB_BASE_URL}/${type === 'series' || type === 'anime' ? 'tv' : 'movie'}/${v}?api_key=${TMDB_API_KEY}&language=en-US`);
                 const m = await res.json();
                 if (m.id) playMovie(mapTMDBItem(m, type === 'anime' ? 'series' : type), true);
               } catch (e) {}
@@ -370,7 +335,7 @@
           window.addEventListener('popstate', handleUrlChange);
           if (introFinished) handleUrlChange(); // Run once after intro
           return () => window.removeEventListener('popstate', handleUrlChange);
-        }, [appLang, introFinished]);
+        }, [introFinished]);
 
         // Debounce Query Input (500ms)
         useEffect(() => {
@@ -411,21 +376,21 @@
              fetchHomeData();
              loadHomeGridData(1, true);
           }
-        }, [introFinished, isHome, appLang]);
+        }, [introFinished, isHome]);
 
         const fetchHomeData = async () => {
           setLoadingHome(true);
           try {
             const [trendingMov, trendingTv, trendingAnime] = await Promise.all([
-              fetch(`${TMDB_BASE_URL}/trending/movie/week?api_key=${TMDB_API_KEY}&language=${appLang}`).then(r => r.json()),
-              fetch(`${TMDB_BASE_URL}/trending/tv/week?api_key=${TMDB_API_KEY}&language=${appLang}`).then(r => r.json()),
-              fetch(`${TMDB_BASE_URL}/discover/tv?api_key=${TMDB_API_KEY}&language=${appLang}&with_genres=16&with_original_language=ja&sort_by=popularity.desc`).then(r => r.json())
+              fetch(`${TMDB_BASE_URL}/trending/movie/week?api_key=${TMDB_API_KEY}&language=en-US`).then(r => r.json()),
+              fetch(`${TMDB_BASE_URL}/trending/tv/week?api_key=${TMDB_API_KEY}&language=en-US`).then(r => r.json()),
+              fetch(`${TMDB_BASE_URL}/discover/tv?api_key=${TMDB_API_KEY}&language=en-US&with_genres=16&with_original_language=ja&sort_by=popularity.desc`).then(r => r.json())
             ]);
 
             setHomeData([
-              { title: appLang === 'ru-RU' ? 'Популярные Фильмы' : 'Trending Movies', movies: trendingMov.results.map(m => mapTMDBItem(m, 'movie')).filter(m => !m.isAnime) },
-              { title: appLang === 'ru-RU' ? 'Популярные Сериалы' : 'Trending TV Shows', movies: trendingTv.results.map(s => mapTMDBItem(s, 'series')).filter(s => !s.isAnime) },
-              { title: appLang === 'ru-RU' ? 'Популярное Аниме' : 'Trending Anime', movies: trendingAnime.results.map(s => mapTMDBItem(s, 'series')) }
+              { title: 'Trending Movies', movies: trendingMov.results.map(m => mapTMDBItem(m, 'movie')).filter(m => !m.isAnime) },
+              { title: 'Trending TV Shows', movies: trendingTv.results.map(s => mapTMDBItem(s, 'series')).filter(s => !s.isAnime) },
+              { title: 'Trending Anime', movies: trendingAnime.results.map(s => mapTMDBItem(s, 'series')) }
             ]);
           } catch (err) { console.error(err); } finally { setLoadingHome(false); setLoading(false); }
         };
@@ -433,7 +398,7 @@
         const loadHomeGridData = async (pageNum, isNew = false) => {
            if (isNew) setHomeGrid([]);
            try {
-              const res = await fetch(`${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&language=${appLang}&sort_by=popularity.desc&page=${pageNum}&without_keywords=210024`);
+              const res = await fetch(`${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&language=en-US&sort_by=popularity.desc&page=${pageNum}&without_keywords=210024`);
               const data = await res.json();
               if (data.results) {
                  const newItems = data.results.map(m => mapTMDBItem(m, 'movie')).filter(m => !m.isAnime);
@@ -448,7 +413,7 @@
           setError(null);
           try {
             const endpt = (typeParam === 'series' || typeParam === 'anime') ? 'search/tv' : 'search/movie';
-            const response = await fetch(`${TMDB_BASE_URL}/${endpt}?api_key=${TMDB_API_KEY}&language=${appLang}&query=${encodeURIComponent(qParam)}&page=${pageNum}`);
+            const response = await fetch(`${TMDB_BASE_URL}/${endpt}?api_key=${TMDB_API_KEY}&language=en-US&query=${encodeURIComponent(qParam)}&page=${pageNum}`);
             const data = await response.json();
 
             if (data.results && data.results.length > 0) {
@@ -459,11 +424,11 @@
               setMovies(prev => isNew ? newItems : [...prev, ...newItems]);
               setHasMore(pageNum < data.total_pages); 
             } else {
-              if (isNew) { setMovies([]); setError(appLang === 'ru-RU' ? 'Ничего не найдено.' : 'No Titles Found.'); setHasMore(false); } 
+              if (isNew) { setMovies([]); setError('No Titles Found.'); setHasMore(false); } 
               else { setHasMore(false); }
             }
           } catch (err) {
-            if (isNew) setError(appLang === 'ru-RU' ? 'Ошибка загрузки.' : 'Failed to fetch data.');
+            if (isNew) setError('Failed to fetch data.');
           } finally { setLoading(false); }
         };
 
@@ -474,18 +439,15 @@
               let url;
               if (typeParam === 'anime') {
                  let genreId = '';
-                 if (genreName !== 'All Anime' && genreName !== 'Все Аниме' && genreName !== 'Anime' && genreName !== 'Аниме') {
-                    const animeGenresDict = appLang === 'ru-RU' ? RU_ANIME_GENRES : EN_ANIME_GENRES;
-                    genreId = animeGenresDict[genreName] ? `,${animeGenresDict[genreName]}` : '';
+                 if (genreName !== 'All Anime') {
+                    genreId = EN_ANIME_GENRES[genreName] ? `,${EN_ANIME_GENRES[genreName]}` : '';
                  }
-                 url = `${TMDB_BASE_URL}/discover/tv?api_key=${TMDB_API_KEY}&language=${appLang}&with_genres=16${genreId}&with_original_language=ja&page=${pageNum}&sort_by=popularity.desc`;
+                 url = `${TMDB_BASE_URL}/discover/tv?api_key=${TMDB_API_KEY}&language=en-US&with_genres=16${genreId}&with_original_language=ja&page=${pageNum}&sort_by=popularity.desc`;
               } else {
-                 const genresDict = typeParam === 'series' 
-                     ? (appLang === 'ru-RU' ? RU_TV_GENRES : EN_TV_GENRES)
-                     : (appLang === 'ru-RU' ? RU_GENRES : EN_GENRES);
+                 const genresDict = typeParam === 'series' ? EN_TV_GENRES : EN_GENRES;
                  const genreId = genresDict[genreName];
                  const endpt = typeParam === 'series' ? 'discover/tv' : 'discover/movie';
-                 url = `${TMDB_BASE_URL}/${endpt}?api_key=${TMDB_API_KEY}&language=${appLang}&with_genres=${genreId}&page=${pageNum}&sort_by=popularity.desc&without_keywords=210024`;
+                 url = `${TMDB_BASE_URL}/${endpt}?api_key=${TMDB_API_KEY}&language=en-US&with_genres=${genreId}&page=${pageNum}&sort_by=popularity.desc&without_keywords=210024`;
               }
               
               const res = await fetch(url);
@@ -499,15 +461,15 @@
               }
 
               // --- CORY IN THE HOUSE ANIME MEME OVERRIDE ---
-              if (pageNum === 1 && typeParam === 'anime' && (genreName === 'Action' || genreName === 'Экшен' || genreName === 'All Anime' || genreName === 'Все Аниме')) {
+              if (pageNum === 1 && typeParam === 'anime' && (genreName === 'Action' || genreName === 'All Anime')) {
                  if (!newItems.some(m => m.id === 119)) {
                      newItems.unshift({
-                        id: 119, // Authentic TMDB ID
+                        id: 119, 
                         Title: 'Cory in the House',
                         Year: '2007',
-                        Poster: 'https://wsrv.nl/?url=upload.wikimedia.org/wikipedia/en/e/e0/Cory_in_the_House_title_card.jpg', // Unblockable Wikipedia image proxy
+                        Poster: 'https://wsrv.nl/?url=upload.wikimedia.org/wikipedia/en/e/e0/Cory_in_the_House_title_card.jpg',
                         Type: 'series',
-                        imdbRating: '10.0', // Certified Masterpiece
+                        imdbRating: '10.0', 
                         Overview: 'Cory Baxter moves to the White House, instantly initiating the greatest anime arc in history.',
                         isAnime: true
                      });
@@ -518,11 +480,11 @@
                  setMovies(prev => isNew ? newItems : [...prev, ...newItems]);
                  setHasMore(pageNum < (data.total_pages || 1));
               } else {
-                 if (isNew) setError(appLang === 'ru-RU' ? 'Ничего не найдено.' : 'No titles found for this genre.');
+                 if (isNew) setError('No titles found for this genre.');
                  setHasMore(false);
               }
            } catch (err) {
-              if (isNew) setError(appLang === 'ru-RU' ? 'Ошибка загрузки.' : 'Failed to fetch titles.');
+              if (isNew) setError('Failed to fetch titles.');
            } finally { setLoading(false); }
         };
 
@@ -553,10 +515,8 @@
         const lastElementRef = useInfiniteScroll(loadMoreData, hasMore, loading);
 
         const playMovie = async (movie, skipUrlUpdate = false) => {
-          setSelectedMovie(movie); setIsHome(false); setSelectedEpisodeData(null); setCurrentServer(0);
+          setSelectedMovie(movie); setIsHome(false); setSelectedEpisodeData(null);
           
-          // Only mark as watched instantly if it's a Movie (because the player auto-loads).
-          // For TV Shows / Anime Series, wait until they click a specific episode!
           if (movie.Type !== 'series') {
              markWatched(movie);
           }
@@ -571,8 +531,8 @@
         const fetchMovieDetails = async (tmdbID, type) => {
            try {
               const [detailsRes, recsRes] = await Promise.all([
-                 fetch(`${TMDB_BASE_URL}/${type === 'series' ? 'tv' : 'movie'}/${tmdbID}?api_key=${TMDB_API_KEY}&language=${appLang}&append_to_response=credits`),
-                 fetch(`${TMDB_BASE_URL}/${type === 'series' ? 'tv' : 'movie'}/${tmdbID}/recommendations?api_key=${TMDB_API_KEY}&language=${appLang}`)
+                 fetch(`${TMDB_BASE_URL}/${type === 'series' ? 'tv' : 'movie'}/${tmdbID}?api_key=${TMDB_API_KEY}&language=en-US&append_to_response=credits`),
+                 fetch(`${TMDB_BASE_URL}/${type === 'series' ? 'tv' : 'movie'}/${tmdbID}/recommendations?api_key=${TMDB_API_KEY}&language=en-US`)
               ]);
               const details = await detailsRes.json();
               const recs = await recsRes.json();
@@ -585,7 +545,7 @@
         const fetchTVSeasons = async (tmdbID) => {
           setLoadingEpisodes(true);
           try {
-            const showDataRes = await fetch(`${TMDB_BASE_URL}/tv/${tmdbID}?api_key=${TMDB_API_KEY}&language=${appLang}`);
+            const showDataRes = await fetch(`${TMDB_BASE_URL}/tv/${tmdbID}?api_key=${TMDB_API_KEY}&language=en-US`);
             const showData = await showDataRes.json();
             
             const validSeasons = showData.seasons.filter(s => s.season_number > 0);
@@ -602,7 +562,7 @@
         const fetchSeasonEpisodes = async (tmdbID, seasonNum) => {
            setLoadingEpisodes(true);
            try {
-              const res = await fetch(`${TMDB_BASE_URL}/tv/${tmdbID}/season/${seasonNum}?api_key=${TMDB_API_KEY}&language=${appLang}`);
+              const res = await fetch(`${TMDB_BASE_URL}/tv/${tmdbID}/season/${seasonNum}?api_key=${TMDB_API_KEY}&language=en-US`);
               const data = await res.json();
               setShowEpisodes(data.episodes || []);
            } catch(e){} finally { setLoadingEpisodes(false); }
@@ -644,39 +604,28 @@
                  textArea.select();
                  document.execCommand("copy");
                  document.body.removeChild(textArea);
-                 setShareText(appLang === 'ru-RU' ? 'Скопировано!' : 'Copied!');
-                 setTimeout(() => setShareText(appLang === 'ru-RU' ? 'Поделиться' : 'Share'), 2000);
+                 setShareText('Copied!');
+                 setTimeout(() => setShareText('Share'), 2000);
               } catch(e){}
            }
         };
 
         const getIframeSrc = () => {
           if (!selectedMovie) return '';
-          const serverList = selectedMovie.isAnime ? ANIME_SERVERS : STREAMING_SERVERS;
-          const base = (serverList[currentServer] || STREAMING_SERVERS[0]).url;
           const id = selectedMovie.id;
 
           if (selectedMovie.Type === 'series' && selectedEpisodeData) {
               const s = selectedEpisodeData.season_number;
               const e = selectedEpisodeData.episode_number;
-              
-              if (base.includes('vidsrc.me')) return `https://vidsrc.me/embed/tv?tmdb=${id}&season=${s}&episode=${e}`;
-              if (base.includes('vidsrc.pro')) return `https://vidsrc.pro/embed/tv/${id}/${s}/${e}`;
-              if (base.includes('embed.su')) return `https://embed.su/embed/tv/${id}/${s}/${e}`;
-              if (base.includes('smashy.stream')) return `https://player.smashy.stream/tv/?tmdb=${id}&season=${s}&ep=${e}`;
-              if (base.includes('multiembed.mov')) return `https://multiembed.mov/directstream.php?video_id=${id}&tmdb=1&s=${s}&e=${e}`;
-              
-              return `${base.replace('movie', 'tv')}${id}/${s}/${e}`;
+              return `https://vidly.pro/embed/tv/${id}/${s}/${e}`;
           }
 
-          if (base.includes('vidsrc.me') || base.includes('smashy.stream')) return `${base}${id}`;
-          if (base.includes('multiembed.mov')) return `https://multiembed.mov/directstream.php?video_id=${id}&tmdb=1`;
-          return `${base}${id}`;
+          return `https://vidly.pro/embed/movie/${id}`;
         };
 
-        const currentMovieGenres = appLang === 'ru-RU' ? Object.keys(RU_GENRES) : Object.keys(EN_GENRES);
-        const currentTvGenres = appLang === 'ru-RU' ? Object.keys(RU_TV_GENRES) : Object.keys(EN_TV_GENRES);
-        const currentAnimeGenres = appLang === 'ru-RU' ? Object.keys(RU_ANIME_GENRES) : Object.keys(EN_ANIME_GENRES);
+        const currentMovieGenres = Object.keys(EN_GENRES);
+        const currentTvGenres = Object.keys(EN_TV_GENRES);
+        const currentAnimeGenres = Object.keys(EN_ANIME_GENRES);
 
         return (
           <React.Fragment>
@@ -710,11 +659,8 @@
                    
                    {/* Mobile Controls Right Side */}
                    <div className="flex items-center gap-2 md:hidden">
-                      <button onClick={toggleLanguage} className="px-3 py-1.5 text-xs font-bold rounded-lg border border-zinc-700 bg-zinc-900/80 text-white hover:bg-zinc-800 transition-colors">
-                         {appLang === 'ru-RU' ? 'RU' : 'EN'}
-                      </button>
                       <button onClick={() => setIsBrowseOpen(!isBrowseOpen)} className="flex items-center gap-1 text-white text-xs font-bold bg-red-600 px-3 py-1.5 rounded-lg shadow-lg relative z-50">
-                         {appLang === 'ru-RU' ? 'Каталог' : 'Browse'} <ChevronDown className="w-3 h-3" />
+                         Browse <ChevronDown className="w-3 h-3" />
                       </button>
                    </div>
                 </div>
@@ -723,12 +669,9 @@
                   
                   {/* Desktop Controls */}
                   <div className="hidden md:flex items-center gap-3">
-                     <button onClick={toggleLanguage} className="px-4 py-2 text-sm font-bold rounded-full border border-zinc-700 bg-zinc-900/80 text-white hover:bg-zinc-800 hover:text-red-400 transition-colors shadow-inner">
-                        {appLang === 'ru-RU' ? 'RU' : 'EN'}
-                     </button>
                      <div className="relative group">
                         <button onClick={() => setIsBrowseOpen(!isBrowseOpen)} className="flex items-center gap-2 text-white font-semibold bg-zinc-900/90 px-5 py-2.5 border border-zinc-800 rounded-full hover:bg-zinc-800 hover:border-zinc-600 transition-all shadow-lg">
-                           {appLang === 'ru-RU' ? 'Каталог' : 'Browse'} <ChevronDown className={`w-4 h-4 transition-transform duration-300 text-red-500 ${isBrowseOpen ? '-rotate-180' : ''}`} />
+                           Browse <ChevronDown className={`w-4 h-4 transition-transform duration-300 text-red-500 ${isBrowseOpen ? '-rotate-180' : ''}`} />
                         </button>
                      </div>
                   </div>
@@ -737,20 +680,20 @@
                   <div className={`absolute top-full left-0 md:left-auto right-0 md:right-[350px] mt-2 w-full md:w-[500px] bg-zinc-900 border border-zinc-800 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.9)] transition-all duration-200 flex flex-col overflow-hidden backdrop-blur-xl ${isBrowseOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'}`}>
                      <div className="grid grid-cols-2 md:grid-cols-3">
                         <div className="border-r border-b md:border-b-0 border-zinc-800 p-2 bg-black/20">
-                           <div className="text-[10px] font-black text-red-600 mb-2 px-3 pt-2 uppercase tracking-widest">{appLang === 'ru-RU' ? 'Фильмы' : 'Movies'}</div>
+                           <div className="text-[10px] font-black text-red-600 mb-2 px-3 pt-2 uppercase tracking-widest">Movies</div>
                            {currentMovieGenres.map(g => (
                               <button key={`mov-${g}`} onClick={() => selectGenre('movie', g)} className="block w-full text-left px-3 py-2 text-sm font-medium text-zinc-300 hover:bg-red-600 hover:text-white rounded-lg transition-colors">{g}</button>
                            ))}
                         </div>
                         <div className="border-b md:border-b-0 md:border-r border-zinc-800 p-2 bg-black/20">
-                           <div className="text-[10px] font-black text-blue-500 mb-2 px-3 pt-2 uppercase tracking-widest">{appLang === 'ru-RU' ? 'Сериалы' : 'TV Shows'}</div>
+                           <div className="text-[10px] font-black text-blue-500 mb-2 px-3 pt-2 uppercase tracking-widest">TV Shows</div>
                            {currentTvGenres.map(g => (
                               <button key={`tv-${g}`} onClick={() => selectGenre('series', g)} className="block w-full text-left px-3 py-2 text-sm font-medium text-zinc-300 hover:bg-blue-600 hover:text-white rounded-lg transition-colors">{g}</button>
                            ))}
                         </div>
                         <div className="col-span-2 md:col-span-1 p-2 bg-zinc-950/50">
-                           <div className="text-[10px] font-black text-yellow-500 mb-2 px-3 pt-2 uppercase tracking-widest">{appLang === 'ru-RU' ? 'Аниме' : 'Anime'}</div>
-                           <button onClick={() => selectGenre('anime', appLang === 'ru-RU' ? 'Все Аниме' : 'All Anime')} className="block w-full text-left px-3 py-2 text-sm font-bold text-yellow-500 hover:bg-yellow-500 hover:text-black rounded-lg transition-colors mb-2 border border-yellow-500/30 bg-yellow-500/10">{appLang === 'ru-RU' ? 'Все Аниме' : 'All Anime'}</button>
+                           <div className="text-[10px] font-black text-yellow-500 mb-2 px-3 pt-2 uppercase tracking-widest">Anime</div>
+                           <button onClick={() => selectGenre('anime', 'All Anime')} className="block w-full text-left px-3 py-2 text-sm font-bold text-yellow-500 hover:bg-yellow-500 hover:text-black rounded-lg transition-colors mb-2 border border-yellow-500/30 bg-yellow-500/10">All Anime</button>
                            {currentAnimeGenres.map(g => (
                               <button key={`ani-${g}`} onClick={() => selectGenre('anime', g)} className="block w-full text-left px-3 py-2 text-sm font-medium text-zinc-300 hover:bg-yellow-500 hover:text-black rounded-lg transition-colors">{g}</button>
                            ))}
@@ -764,16 +707,16 @@
                         onClick={() => setSearchType(prev => prev === 'movie' ? 'series' : prev === 'series' ? 'anime' : 'movie')} 
                         className="flex items-center justify-center gap-1.5 px-3 min-w-[85px] text-xs font-bold text-zinc-300 bg-zinc-800/50 hover:bg-zinc-700 transition-colors border-r border-zinc-800 shrink-0"
                      >
-                        {searchType === 'movie' && <><Film className="w-3.5 h-3.5 text-red-500" /> {appLang === 'ru-RU' ? 'Фильмы' : 'Movie'}</>}
-                        {searchType === 'series' && <><TvIcon className="w-3.5 h-3.5 text-blue-500" /> {appLang === 'ru-RU' ? 'ТВ' : 'TV'}</>}
-                        {searchType === 'anime' && <><ZapIcon className="w-3.5 h-3.5 text-yellow-500" /> {appLang === 'ru-RU' ? 'Аниме' : 'Anime'}</>}
+                        {searchType === 'movie' && <><Film className="w-3.5 h-3.5 text-red-500" /> Movie</>}
+                        {searchType === 'series' && <><TvIcon className="w-3.5 h-3.5 text-blue-500" /> TV</>}
+                        {searchType === 'anime' && <><ZapIcon className="w-3.5 h-3.5 text-yellow-500" /> Anime</>}
                      </button>
                      <div className="relative flex-1">
                         <input
                            type="text"
                            value={query}
                            onChange={(e) => setQuery(e.target.value)}
-                           placeholder={appLang === 'ru-RU' ? 'Поиск...' : 'Search...'}
+                           placeholder="Search..."
                            className="w-full bg-transparent text-white py-2.5 pl-4 pr-10 focus:outline-none placeholder-zinc-500 text-sm"
                         />
                         {query && (
@@ -822,46 +765,14 @@
                            <ShareIcon className="w-4 h-4" /> <span>{shareText}</span>
                          </button>
                          <button onClick={closePlayer} className="flex items-center justify-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-full transition-colors whitespace-nowrap font-medium shadow-[0_0_20px_rgba(229,9,20,0.4)]">
-                           <X className="w-5 h-5" /> <span>{appLang === 'ru-RU' ? 'Закрыть' : 'Close'}</span>
+                           <X className="w-5 h-5" /> <span>Close</span>
                          </button>
                       </div>
                     </div>
 
                     {(selectedMovie.Type !== 'series' || selectedEpisodeData) && (
                       <>
-                        {/* Russian Audio Instruction Banner */}
-                        {appLang === 'ru-RU' && (
-                          <div className="bg-zinc-900/80 border border-red-500/30 rounded-xl p-3 sm:p-4 mb-6 shadow-xl flex items-start sm:items-center gap-3 backdrop-blur-md animate-in fade-in zoom-in duration-500">
-                            <AlertCircle className="w-6 h-6 text-red-500 shrink-0 mt-0.5 sm:mt-0" />
-                            <p className="text-zinc-300 text-sm sm:text-base leading-relaxed">
-                              <strong className="text-white tracking-wide">РУССКАЯ ОЗВУЧКА И СУБТИТРЫ:</strong> Если видео на английском, нажмите на значок <strong className="text-red-400">Настроек (Шестеренка)</strong> внутри плеера! 
-                              <span className="block mt-1 text-xs sm:hidden text-zinc-400 italic">Совет: Раскройте видео на весь экран для удобного выбора в меню!</span>
-                            </p>
-                          </div>
-                        )}
-
-                        {/* Chowder Server Selector - ONLY renders for Anime */}
-                        {selectedMovie.isAnime && (
-                            <div className="relative z-10 mb-4 bg-zinc-900/60 p-3 rounded-xl border border-white/5 backdrop-blur-md animate-in fade-in slide-in-from-top-4 duration-500">
-                                <div className="flex items-center gap-2 mb-2 px-1">
-                                    <ServerIcon className="w-4 h-4 text-yellow-500" />
-                                    <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">{appLang === 'ru-RU' ? 'Выбор Аниме Сервера' : 'Anime Server Engine'}</span>
-                                </div>
-                                <div className="flex overflow-x-auto no-scrollbar gap-2 pb-1">
-                                    {ANIME_SERVERS.map((server, idx) => (
-                                        <button 
-                                            key={idx}
-                                            onClick={() => setCurrentServer(idx)}
-                                            className={`px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all border ${currentServer === idx ? 'bg-yellow-500/20 text-yellow-500 border-yellow-500/50 shadow-[0_0_15px_rgba(234,179,8,0.2)]' : 'bg-zinc-800 text-zinc-400 border-transparent hover:bg-zinc-700 hover:text-white'}`}
-                                        >
-                                            {server.name}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                        
-                        {/* Responsive Mobile Iframe Player - Minimum Height fixes squished menus! */}
+                        {/* Responsive Mobile Iframe Player */}
                         <div className="relative w-full bg-black rounded-2xl overflow-hidden shadow-[0_0_80px_rgba(229,9,20,0.15)] ring-1 ring-zinc-800 mb-8 min-h-[400px]" style={{ paddingTop: '56.25%' }}>
                           <div className="absolute inset-0 flex items-center justify-center -z-10 bg-zinc-950">
                              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
@@ -884,8 +795,8 @@
                        <div className="bg-zinc-900/80 rounded-3xl p-6 sm:p-8 border border-zinc-800/80 backdrop-blur-xl shadow-xl mb-10">
                           <div className="flex flex-col lg:flex-row gap-8">
                              <div className="flex-1">
-                                <h3 className="text-xl font-bold text-white mb-3">{appLang === 'ru-RU' ? 'Сюжет' : 'Synopsis'}</h3>
-                                <p className="text-zinc-400 leading-relaxed text-sm sm:text-base">{movieDetails.overview || (appLang === 'ru-RU' ? 'Описание отсутствует.' : 'No overview available.')}</p>
+                                <h3 className="text-xl font-bold text-white mb-3">Synopsis</h3>
+                                <p className="text-zinc-400 leading-relaxed text-sm sm:text-base">{movieDetails.overview || 'No overview available.'}</p>
                                 
                                 <div className="flex flex-wrap items-center gap-4 mt-6">
                                    {movieDetails.genres && movieDetails.genres.map(g => (
@@ -897,7 +808,7 @@
 
                              {movieDetails.credits && movieDetails.credits.cast && movieDetails.credits.cast.length > 0 && (
                                 <div className="w-full lg:w-[400px] shrink-0">
-                                   <h3 className="text-xl font-bold text-white mb-4">{appLang === 'ru-RU' ? 'В ролях' : 'Top Cast'}</h3>
+                                   <h3 className="text-xl font-bold text-white mb-4">Top Cast</h3>
                                    <div className="grid grid-cols-2 gap-4">
                                       {movieDetails.credits.cast.slice(0, 4).map(actor => (
                                          <div key={actor.id} className="flex items-center gap-3 bg-zinc-950/50 p-2 rounded-lg border border-zinc-800/50">
@@ -925,13 +836,13 @@
                           {loadingEpisodes ? (
                              <div className="flex flex-col items-center justify-center py-20">
                                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mb-4"></div>
-                                <span className="text-zinc-500 font-medium tracking-widest uppercase text-sm">{appLang === 'ru-RU' ? 'Загрузка...' : 'Loading TV Data...'}</span>
+                                <span className="text-zinc-500 font-medium tracking-widest uppercase text-sm">Loading TV Data...</span>
                              </div>
                           ) : showEpisodes.length > 0 ? (
                              <>
                                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
                                   <h3 className="text-2xl font-black text-white flex items-center gap-3">
-                                    <Film className="w-6 h-6 text-red-500" /> {appLang === 'ru-RU' ? 'ЭПИЗОДЫ' : 'EPISODES'}
+                                    <Film className="w-6 h-6 text-red-500" /> EPISODES
                                   </h3>
                                   <div className="relative w-full sm:w-auto min-w-[200px]">
                                     <select 
@@ -940,7 +851,7 @@
                                       onChange={handleSeasonChange}
                                     >
                                       {showSeasons.map(season => (
-                                        <option key={season} value={season}>{appLang === 'ru-RU' ? 'Сезон' : 'Season'} {season}</option>
+                                        <option key={season} value={season}>Season {season}</option>
                                       ))}
                                     </select>
                                     <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400 pointer-events-none" />
@@ -986,7 +897,7 @@
                                               </span>
                                            </div>
                                            <p className="text-zinc-400 text-sm sm:text-base line-clamp-3 leading-relaxed font-medium">
-                                              {episode.overview || (appLang === 'ru-RU' ? 'Описание отсутствует.' : 'No description available for this episode.')}
+                                              {episode.overview || 'No description available for this episode.'}
                                            </p>
                                         </div>
                                       </div>
@@ -996,7 +907,7 @@
                           ) : (
                              <div className="text-center py-20 text-zinc-600">
                                 <AlertCircle className="w-16 h-16 mx-auto mb-4 opacity-30" />
-                                <p className="text-lg font-medium">{appLang === 'ru-RU' ? 'Нет данных об эпизодах.' : 'No episode data available for this series.'}</p>
+                                <p className="text-lg font-medium">No episode data available for this series.</p>
                              </div>
                           )}
                        </div>
@@ -1006,7 +917,7 @@
                     {recommendations.length > 0 && (
                        <div className="w-full mt-12 animate-in fade-in duration-1000">
                            <h3 className="text-xl sm:text-2xl font-black text-white mb-6 flex items-center gap-3 pl-4 border-l-4 border-red-600">
-                              {appLang === 'ru-RU' ? 'Похожие' : 'More Like This'}
+                              More Like This
                            </h3>
                            <div className="flex gap-4 sm:gap-5 overflow-x-auto pb-6 px-4 snap-x snap-mandatory custom-scrollbar">
                              {recommendations.map((movie, index) => (
@@ -1062,12 +973,12 @@
                     {!loading && movies.length > 0 && (
                       <h3 className="text-2xl font-medium text-zinc-400 mb-8 flex items-center gap-2">
                         {browseContext === 'search' ? (
-                          <>{appLang === 'ru-RU' ? 'Результаты для' : 'Results for'} <span className="text-white font-bold">"{debouncedQuery}"</span></>
+                          <>Results for <span className="text-white font-bold">"{debouncedQuery}"</span></>
                         ) : (
-                          <>{appLang === 'ru-RU' ? 'Просмотр' : 'Browsing'} <span className="text-white font-bold">
+                          <>Browsing <span className="text-white font-bold">
                             {activeGenre.type === 'anime' 
-                               ? (activeGenre.genre === 'All Anime' || activeGenre.genre === 'Все Аниме' || activeGenre.genre === 'Anime' || activeGenre.genre === 'Аниме' ? (appLang === 'ru-RU' ? 'Аниме Каталог' : 'Anime Catalog') : `${activeGenre.genre} ${appLang === 'ru-RU' ? 'Аниме' : 'Anime'}`) 
-                               : `${activeGenre.genre} ${activeGenre.type === 'movie' ? (appLang === 'ru-RU' ? 'Фильмы' : 'Movies') : (appLang === 'ru-RU' ? 'Сериалы' : 'TV Shows')}`}
+                               ? (activeGenre.genre === 'All Anime' ? 'Anime Catalog' : `${activeGenre.genre} Anime`) 
+                               : `${activeGenre.genre} ${activeGenre.type === 'movie' ? 'Movies' : 'TV Shows'}`}
                           </span></>
                         )}
                       </h3>
@@ -1116,7 +1027,7 @@
                     {hasMore && !selectedMovie && (
                        <div ref={lastElementRef} className="py-16 flex flex-col items-center justify-center">
                           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-red-600 mb-4"></div>
-                          <span className="text-zinc-500 font-bold tracking-widest uppercase text-xs">{appLang === 'ru-RU' ? 'Загрузка...' : 'Loading More...'}</span>
+                          <span className="text-zinc-500 font-bold tracking-widest uppercase text-xs">Loading More...</span>
                        </div>
                     )}
                   </div>
@@ -1129,14 +1040,14 @@
                       <div className="absolute inset-0 border-4 border-zinc-800 rounded-full"></div>
                       <div className="absolute inset-0 border-4 border-red-600 rounded-full border-t-transparent animate-spin"></div>
                     </div>
-                    <p className="mt-6 text-zinc-400 font-bold tracking-widest uppercase text-sm">{appLang === 'ru-RU' ? 'Поиск...' : 'Fetching DB...'}</p>
+                    <p className="mt-6 text-zinc-400 font-bold tracking-widest uppercase text-sm">Fetching DB...</p>
                   </div>
                 )}
 
                 {error && !loading && movies.length === 0 && !isHome && !selectedMovie && (
                   <div className="flex flex-col items-center justify-center py-24 text-center">
                     <AlertCircle className="w-20 h-20 text-zinc-800 mb-6" />
-                    <h3 className="text-3xl font-black text-white mb-3">{appLang === 'ru-RU' ? 'Ничего не найдено' : 'No Titles Found'}</h3>
+                    <h3 className="text-3xl font-black text-white mb-3">No Titles Found</h3>
                     <p className="text-zinc-500 font-medium max-w-md">{error}</p>
                   </div>
                 )}
@@ -1147,7 +1058,7 @@
                     {loadingHome ? (
                        <div className="flex flex-col items-center justify-center py-32">
                          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-red-600 mb-6"></div>
-                         <p className="text-zinc-400 font-bold tracking-widest uppercase">{appLang === 'ru-RU' ? 'Сборка...' : 'Building Library...'}</p>
+                         <p className="text-zinc-400 font-bold tracking-widest uppercase">Building Library...</p>
                        </div>
                     ) : (
                        <div className="space-y-10 sm:space-y-14 mt-4 sm:mt-8">
@@ -1156,7 +1067,7 @@
                          {watchedHistory.length > 0 && (
                             <div className="w-full mb-4">
                                <h3 className="text-xl sm:text-2xl font-black text-white mb-4 sm:mb-6 flex items-center gap-3 pl-2 sm:pl-4 border-l-4 border-red-600">
-                                 {appLang === 'ru-RU' ? 'Продолжить просмотр' : 'Continue Watching'}
+                                 Continue Watching
                                </h3>
                                <div className="flex gap-4 sm:gap-5 overflow-x-auto pb-6 px-2 sm:px-4 snap-x snap-mandatory custom-scrollbar">
                                  {watchedHistory.map((movie, index) => (
@@ -1172,9 +1083,9 @@
                                           <p className="text-zinc-300 text-xs font-medium flex items-center gap-1 mt-1"><Play className="w-3 h-3 text-red-500" fill="currentColor" /> {movie.isAnime ? 'Anime' : movie.Type === 'series' ? 'TV' : 'Movie'}</p>
                                        </div>
                                        <div className="poster-overlay absolute inset-0 flex flex-col items-center justify-center backdrop-blur-[2px]">
-                                         <div className="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center transform scale-50 group-hover:scale-100 transition-transform duration-300 shadow-[0_0_30px_rgba(229,9,20,0.8)]">
-                                           <Play className="w-6 h-6 text-white ml-1" fill="currentColor" />
-                                         </div>
+                                          <div className="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center transform scale-50 group-hover:scale-100 transition-transform duration-300 shadow-[0_0_30px_rgba(229,9,20,0.8)]">
+                                            <Play className="w-6 h-6 text-white ml-1" fill="currentColor" />
+                                          </div>
                                        </div>
                                      </div>
                                    </div>
@@ -1209,9 +1120,9 @@
                                           </div>
                                        )}
                                        <div className="poster-overlay absolute inset-0 flex flex-col items-center justify-center backdrop-blur-[2px]">
-                                         <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center transform scale-50 group-hover:scale-100 transition-transform duration-300 shadow-[0_0_30px_rgba(229,9,20,0.8)]">
-                                           <Play className="w-5 h-5 text-white ml-1" fill="currentColor" />
-                                         </div>
+                                          <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center transform scale-50 group-hover:scale-100 transition-transform duration-300 shadow-[0_0_30px_rgba(229,9,20,0.8)]">
+                                            <Play className="w-5 h-5 text-white ml-1" fill="currentColor" />
+                                          </div>
                                        </div>
                                      </div>
                                      <div className="p-3 sm:p-4 bg-zinc-900">
@@ -1234,7 +1145,7 @@
                          {homeGrid.length > 0 && (
                             <div className="w-full pt-8 border-t border-zinc-900">
                                <h3 className="text-xl sm:text-2xl font-black text-white mb-6 flex items-center gap-3 pl-2 sm:pl-4 border-l-4 border-red-600">
-                                 {appLang === 'ru-RU' ? 'Рекомендации для вас' : 'Discover Feed'}
+                                 Discover Feed
                                </h3>
                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6 gap-y-8 sm:gap-y-10 px-2 sm:px-4">
                                   {homeGrid.map((movie, index) => (
@@ -1255,9 +1166,9 @@
                                             </div>
                                          )}
                                          <div className="poster-overlay absolute inset-0 flex flex-col items-center justify-center backdrop-blur-[2px]">
-                                           <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center transform scale-50 group-hover:scale-100 transition-transform duration-300 shadow-[0_0_30px_rgba(229,9,20,0.8)]">
-                                             <Play className="w-5 h-5 text-white ml-1" fill="currentColor" />
-                                           </div>
+                                            <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center transform scale-50 group-hover:scale-100 transition-transform duration-300 shadow-[0_0_30px_rgba(229,9,20,0.8)]">
+                                              <Play className="w-5 h-5 text-white ml-1" fill="currentColor" />
+                                            </div>
                                          </div>
                                        </div>
                                        <div className="p-3 sm:p-4 bg-zinc-900">
@@ -1273,7 +1184,7 @@
                                {hasMore && (
                                  <div ref={lastElementRef} className="py-16 flex flex-col items-center justify-center">
                                     <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-red-600 mb-4"></div>
-                                    <span className="text-zinc-500 font-bold tracking-widest uppercase text-xs">{appLang === 'ru-RU' ? 'Загрузка...' : 'Loading More...'}</span>
+                                    <span className="text-zinc-500 font-bold tracking-widest uppercase text-xs">Loading More...</span>
                                  </div>
                                )}
                             </div>
@@ -1291,7 +1202,7 @@
                     onClick={scrollToTop} 
                     className="fixed right-6 p-4 bg-red-600 text-white rounded-full shadow-[0_0_20px_rgba(229,9,20,0.5)] hover:bg-red-700 hover:scale-110 transition-all z-50 animate-in fade-in zoom-in duration-300 safe-fab"
                     style={{ bottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
-                    title={appLang === 'ru-RU' ? 'Наверх' : 'Back to top'}
+                    title="Back to top"
                  >
                     <ArrowUp className="w-6 h-6" />
                  </button>
