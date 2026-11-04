@@ -24,14 +24,6 @@
     
     <!-- Babel for in-browser JSX compilation -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script>
-      // Force Babel to use the classic JSX runtime to prevent the "Cannot use import statement" crash
-      Babel.registerPreset('react-classic', {
-        presets: [
-          [Babel.availablePresets.react, { runtime: 'classic' }]
-        ]
-      });
-    </script>
 
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;800&display=swap');
@@ -182,7 +174,7 @@
 <body>
     <div id="root"></div>
 
-    <script type="text/babel" data-presets="react-classic">
+    <script type="text/babel">
       const { useState, useEffect, useRef, useCallback } = React;
 
       const Search = ({ className }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>);
@@ -207,18 +199,18 @@
 
       const STREAMING_SERVERS = [
           { name: 'VidLink', url: 'https://vidlink.pro/movie/' },
-          { name: 'SuperEmbed', url: 'https://superembed.stream/movie/' },
-          { name: 'VidSrc ME', url: 'https://vidsrc.me/embed/movie/' },
-          { name: 'Embed SU', url: 'https://embed.su/embed/movie/' },
-          { name: 'VidSrc PRO', url: 'https://vidsrc.pro/embed/movie/' },
+          { name: 'EmbedSU', url: 'https://embed.su/embed/movie/' },
+          { name: 'VidBinge', url: 'https://vidbinge.dev/embed/movie/' },
+          { name: 'MultiEmbed', url: 'https://multiembed.mov/directstream.php?video_id=' },
+          { name: 'VidSrc CC', url: 'https://vidsrc.cc/v2/embed/movie/' }
       ];
 
       // Chowder Servers for Anime Sub/Dub support
       const ANIME_SERVERS = [
           { name: 'Chowder (Auto)', url: 'https://vidlink.pro/movie/' },
           { name: 'Mung Daal (Multi-Audio)', url: 'https://embed.su/embed/movie/' },
-          { name: 'Schnitzel (Subs/Dubs)', url: 'https://vidsrc.me/embed/movie/' },
-          { name: 'Panini (Backup)', url: 'https://superembed.stream/movie/' }
+          { name: 'Schnitzel (Subs/Dubs)', url: 'https://vidsrc.cc/v2/embed/movie/' },
+          { name: 'Panini (Backup)', url: 'https://multiembed.mov/directstream.php?video_id=' }
       ];
 
       const EN_GENRES = { 'Action': 28, 'Comedy': 35, 'Sci-Fi': 878, 'Horror': 27, 'Romance': 10749, 'Thriller': 53, 'Drama': 18, 'Animation': 16, 'Crime': 80, 'Mystery': 9648 };
@@ -664,14 +656,20 @@
           const base = (serverList[currentServer] || STREAMING_SERVERS[0]).url;
 
           if (selectedMovie.Type === 'series' && selectedEpisodeData) {
-              if (base.includes('vidlink.pro')) return `${base}${selectedMovie.id}/${selectedEpisodeData.season_number}/${selectedEpisodeData.episode_number}`;
-              if (base.includes('vidsrc.me')) return `https://vidsrc.me/embed/tv?tmdb=${selectedMovie.id}&season=${selectedEpisodeData.season_number}&episode=${selectedEpisodeData.episode_number}`;
-              if (base.includes('embed.su')) return `https://embed.su/embed/tv/${selectedMovie.id}/${selectedEpisodeData.season_number}/${selectedEpisodeData.episode_number}`;
-              if (base.includes('vidsrc.pro')) return `https://vidsrc.pro/embed/tv/${selectedMovie.id}/${selectedEpisodeData.season_number}/${selectedEpisodeData.episode_number}`;
-              return `${base.replace('movie', 'tv')}${selectedMovie.id}/${selectedEpisodeData.season_number}/${selectedEpisodeData.episode_number}`;
+              const s = selectedEpisodeData.season_number;
+              const e = selectedEpisodeData.episode_number;
+              const id = selectedMovie.id;
+              
+              if (base.includes('vidlink.pro')) return `https://vidlink.pro/tv/${id}/${s}/${e}`;
+              if (base.includes('embed.su')) return `https://embed.su/embed/tv/${id}/${s}/${e}`;
+              if (base.includes('vidbinge.dev')) return `https://vidbinge.dev/embed/tv/${id}/${s}/${e}`;
+              if (base.includes('multiembed.mov')) return `https://multiembed.mov/directstream.php?video_id=${id}&tmdb=1&s=${s}&e=${e}`;
+              if (base.includes('vidsrc.cc')) return `https://vidsrc.cc/v2/embed/tv/${id}/${s}/${e}`;
+              
+              return `${base.replace('movie', 'tv')}${id}/${s}/${e}`;
           }
 
-          if (base.includes('vidsrc.me')) return `https://vidsrc.me/embed/movie?tmdb=${selectedMovie.id}`;
+          if (base.includes('multiembed.mov')) return `https://multiembed.mov/directstream.php?video_id=${selectedMovie.id}&tmdb=1`;
           return `${base}${selectedMovie.id}`;
         };
 
