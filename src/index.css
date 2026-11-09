@@ -1,0 +1,151 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background-color: #09090b;
+  color: white;
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  overflow-x: hidden;
+  
+  /* PWA Mobile Optimization */
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+input, p, h1, h2, h3, h4, span, strong { user-select: auto; }
+
+/* --- Intro Animation Styles --- */
+.intro-overlay {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  perspective: 1000px;
+}
+
+.intro-light-beam {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 200vw;
+  height: 200vh;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(229,9,20,0.4) 0%, rgba(0,0,0,1) 60%);
+  opacity: 0;
+  animation: beamFlash 4.5s ease-in-out forwards;
+}
+
+.intro-text-container {
+  position: relative;
+  transform-style: preserve-3d;
+}
+
+.intro-text {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(4rem, 12vw, 10rem);
+  color: transparent;
+  -webkit-text-stroke: 2px #e50914;
+  text-transform: uppercase;
+  position: relative;
+  z-index: 10;
+  will-change: transform, opacity, filter;
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  animation: cinematicText 4.5s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+}
+
+@media (min-width: 768px) {
+  .intro-text { -webkit-text-stroke: 4px #e50914; }
+}
+
+.intro-text::before {
+  content: 'ALANFLIX';
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: #e50914;
+  filter: blur(3px);
+  opacity: 0;
+  animation: textGlow 4.5s ease-in-out forwards;
+  z-index: -1;
+}
+
+.intro-particles {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, #fff 1px, transparent 1px);
+  background-size: 50px 50px;
+  opacity: 0.1;
+  animation: particleZoom 4.5s linear forwards;
+}
+
+@keyframes cinematicText {
+  0% { transform: translateZ(-2000px) rotateX(45deg); opacity: 0; }
+  30% { transform: translateZ(0) rotateX(0deg); opacity: 1; color: transparent; text-shadow: none; }
+  50% { color: #e50914; text-shadow: 0 0 5px #e50914, 0 0 10px #e50914; transform: translateZ(50px) scale(1.05); }
+  85% { transform: translateZ(100px) scale(1.15); opacity: 1; filter: blur(0px); text-shadow: none; }
+  100% { transform: translateZ(0) scale(4); opacity: 0; filter: blur(10px); text-shadow: none; }
+}
+
+@keyframes textGlow {
+  0%, 30% { opacity: 0; }
+  50%, 80% { opacity: 0.9; }
+  100% { opacity: 0; }
+}
+
+@keyframes beamFlash {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(2); }
+}
+
+@keyframes particleZoom {
+  0% { transform: scale(1) translateZ(-500px); opacity: 0; }
+  50% { opacity: 0.5; }
+  100% { transform: scale(5) translateZ(500px); opacity: 0; }
+}
+
+/* --- UI Styles --- */
+.glass-nav {
+  background: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+  backdrop-filter: blur(8px);
+}
+
+.movie-card {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+  /* PERFORMANCE: content-visibility skips rendering off-screen cards */
+  content-visibility: auto;
+  contain-intrinsic-size: 200px 300px;
+  will-change: transform;
+}
+
+.movie-card:hover {
+  transform: scale(1.05) translateY(-5px) translateZ(0); /* translateZ forces hardware acceleration */
+  z-index: 10;
+  box-shadow: 0 20px 40px rgba(229, 9, 20, 0.3);
+}
+
+.poster-overlay {
+  background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.movie-card:hover .poster-overlay { opacity: 1; }
+
+.custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 10px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #e50914; }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
